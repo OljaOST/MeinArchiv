@@ -29,6 +29,7 @@ PROJEKTORDNER = Path(__file__).resolve().parents[2]
 load_dotenv(PROJEKTORDNER / ".env")
 
 app = Flask(__name__)
+app.config["TEMPLATES_AUTO_RELOAD"] = True
 app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024
 
 app.config["SQLALCHEMY_DATABASE_URI"] = URL.create(
@@ -60,6 +61,8 @@ def index():
 
 @app.route("/dokumente")
 def dokumente():
+    suche = request.args.get("q", "").strip()
+
     try:
         dokument_abfrage = (
             db.select(
@@ -73,6 +76,11 @@ def dokumente():
             )
             .order_by(Dokument.id.desc())
         )
+
+        if suche:
+            dokument_abfrage = dokument_abfrage.where(
+                Dokument.dateiname.icontains(suche, autoescape=True)
+            )
 
         gespeicherte_dokumente = db.session.execute(dokument_abfrage).all()
 
@@ -90,6 +98,7 @@ def dokumente():
         "dokumente.html",
         dokumente=gespeicherte_dokumente,
         kategorien=gespeicherte_kategorien,
+        suche=suche,
     )
 
 @app.route("/dokumente/speichern", methods=["POST"])
@@ -209,3 +218,150 @@ def kategorie_speichern():
         return jsonify(fehler="Die Kategorie konnte nicht gespeichert werden."), 503
 
     return redirect(url_for("kategorien"), code=303)
+
+@app.route(
+    "/dokumente/<int:dokument_id>/kategorie",
+    methods=["GET", "POST"],
+)
+def dokument_kategorie(dokument_id):
+    kategorie_id = None
+
+    if request.method == "POST":
+        kategorie_wert = request.form.get("kategorie_id", "")
+
+        try:
+            kategorie_id = int(kategorie_wert) if kategorie_wert else None
+        except ValueError:
+            return jsonify(fehler="Bitte eine gültige Kategorie auswählen."), 400
+
+    try:
+        dokument_abfrage = db.select(
+            Dokument.id,
+            Dokument.dateiname,
+            Dokument.kategorie_id,
+        ).where(Dokument.id == dokument_id)
+
+        dokument = db.session.execute(dokument_abfrage).one_or_none()
+
+        if dokument is None:
+            abort(404)
+
+        if request.method == "POST":
+            if kategorie_id is not None:
+                kategorie = db.session.get(Kategorie, kategorie_id)
+
+                if kategorie is None:
+                    return jsonify(
+                        fehler="Die ausgewählte Kategorie existiert nicht mehr."
+                    ), 400
+
+            aenderung = (
+                db.update(Dokument)
+                .where(Dokument.id == dokument_id)
+                .values(kategorie_id=kategorie_id)
+            )
+
+            ergebnis = db.session.execute(aenderung)
+
+            if ergebnis.rowcount != 1:
+                db.session.rollback()
+                abort(404)
+
+            db.session.commit()
+            return redirect(url_for("dokumente"), code=303)
+
+        kategorie_abfrage = db.select(
+            Kategorie.id,
+            Kategorie.name,
+        ).order_by(Kategorie.name)
+
+        kategorien = db.session.execute(kategorie_abfrage).all()
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify(
+            fehler="Die Zuordnung konnte nicht gespeichert werden. "
+            "Bitte die Seite neu laden."
+        ), 409
+    except SQLAlchemyError:
+        db.session.rollback()
+        return jsonify(
+            fehler="Die Kategorie konnte nicht geladen oder geändert werden."
+        ), 503
+
+    return render_template(
+        "dokument_kategorie.html",
+        dokument=dokument,
+        kategorien=kategorien,
+    )
+
+@app.route(
+    "/kategorien/<int:kategorie_id>/bearbeiten",
+    methods=["GET", "POST"],
+)
+def kategorie_bearbeiten(kategorie_id):
+    if request.method == "POST":
+        name = request.form.get("name", "").strip()
+
+        if not name or len(name) > 60:
+            return jsonify(
+                fehler="Bitte einen Kategorienamen mit 1 bis 60 Zeichen eingeben."
+            ), 400
+
+    try:
+        kategorie = db.session.get(Kategorie, kategorie_id)
+
+        if kategorie is None:
+            abort(404)
+
+        if request.method == "POST":
+            kategorie.name = name
+            db.session.commit()
+
+            return redirect(url_for("kategorien"), code=303)
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify(fehler="Dieser Kategoriename ist bereits vergeben."), 409
+    except SQLAlchemyError:
+        db.session.rollback()
+        return jsonify(
+            fehler="Die Kategorie konnte nicht geladen oder geändert werden."
+        ), 503
+
+    return render_template(
+        "kategorie_bearbeiten.html",
+        kategorie=kategorie,
+    )
+
+@app.route(
+    "/kategorien/<int:kategorie_id>/loeschen",
+    methods=["GET", "POST"],
+)
+def kategorie_loeschen(kategorie_id):
+    try:
+        kategorie = db.session.get(Kategorie, kategorie_id)
+
+        if kategorie is None:
+            abort(404)
+
+        if request.method == "POST":
+            db.session.delete(kategorie)
+            db.session.commit()
+
+            return redirect(url_for("kategorien"), code=303)
+
+        anzahl_abfrage = db.select(
+            db.func.count(Dokument.id)
+        ).where(Dokument.kategorie_id == kategorie_id)
+
+        anzahl_dokumente = db.session.scalar(anzahl_abfrage)
+    except SQLAlchemyError:
+        db.session.rollback()
+        return jsonify(
+            fehler="Die Kategorie konnte nicht geladen oder gelöscht werden."
+        ), 503
+
+    return render_template(
+        "kategorie_loeschen.html",
+        kategorie=kategorie,
+        anzahl_dokumente=anzahl_dokumente,
+    )

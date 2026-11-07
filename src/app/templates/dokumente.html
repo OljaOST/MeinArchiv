@@ -12,6 +12,16 @@
 
     <h1>Meine Dokumente</h1>
 
+    <form action="{{ url_for('dokumente') }}" method="get">
+        <label for="suche">Nach Dateiname suchen</label>
+
+        <input type="search" id="suche" name="q" value="{{ suche }}" placeholder="Zum Beispiel Rechnung">
+
+        <button type="submit">Suchen</button>
+
+        <a href="{{ url_for('dokumente') }}">Alle Dokumente anzeigen</a>
+    </form>
+
     {% if dokumente %}
     <ul>
         {% for dokument in dokumente %}
@@ -20,14 +30,26 @@
             – {{ dokument.kategoriename or "Ohne Kategorie" }}
 
             <a href="{{ url_for('dokument_download',
-                                        dokument_id=dokument.id) }}">
+                        dokument_id=dokument.id) }}">
                 Herunterladen
+            </a>
+
+            <span aria-hidden="true"> | </span>
+
+            <a href="{{ url_for('dokument_kategorie',
+                        dokument_id=dokument.id) }}">
+                Kategorie ändern
             </a>
         </li>
         {% endfor %}
     </ul>
     {% else %}
+    {% if suche %}
+    <p>Keine Dokumente für „{{ suche }}“ gefunden.</p>
+    {% else %}
     <p>Es sind noch keine Dokumente vorhanden.</p>
+    {% endif %}
+
     {% endif %}
 
     <h2>Dokument hinzufügen</h2>

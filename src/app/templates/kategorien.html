@@ -15,7 +15,21 @@
     {% if kategorien %}
     <ul>
         {% for kategorie in kategorien %}
-        <li>{{ kategorie.name }}</li>
+        <li>
+            {{ kategorie.name }}
+
+            <a href="{{ url_for('kategorie_bearbeiten',
+                        kategorie_id=kategorie.id) }}">
+                Umbenennen
+            </a>
+
+            <span aria-hidden="true"> | </span>
+
+            <a href="{{ url_for('kategorie_loeschen',
+                        kategorie_id=kategorie.id) }}">
+                Löschen
+            </a>
+        </li>
         {% endfor %}
     </ul>
     {% else %}

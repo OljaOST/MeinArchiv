@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Kategorie ändern – MeinArchiv</title>
+</head>
+
+<body>
+    <a href="{{ url_for('dokumente') }}">Zurück zu meinen Dokumenten</a>
+
+    <h1>Kategorie ändern</h1>
+    <p>Dokument: {{ dokument.dateiname }}</p>
+
+    <form action="{{ url_for('dokument_kategorie',
+                             dokument_id=dokument.id) }}" method="post">
+
+        <label for="kategorie">Kategorie</label>
+
+        <select id="kategorie" name="kategorie_id">
+            <option value="" {% if dokument.kategorie_id is none %}selected{% endif %}>
+                Ohne Kategorie
+            </option>
+
+            {% for kategorie in kategorien %}
+            <option value="{{ kategorie.id }}" {% if dokument.kategorie_id==kategorie.id %} selected {% endif %}>
+                {{ kategorie.name }}
+            </option>
+            {% endfor %}
+        </select>
+
+        <button type="submit">Änderung speichern</button>
+    </form>
+</body>
+
+</html>

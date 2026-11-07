@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Kategorie umbenennen – MeinArchiv</title>
+</head>
+
+<body>
+    <a href="{{ url_for('kategorien') }}">Zurück zu den Kategorien</a>
+
+    <h1>Kategorie umbenennen</h1>
+
+    <form action="{{ url_for('kategorie_bearbeiten',
+                             kategorie_id=kategorie.id) }}" method="post">
+
+        <label for="name">Kategoriename</label>
+
+        <input type="text" id="name" name="name" value="{{ kategorie.name }}" maxlength="60" required>
+
+        <button type="submit">Änderung speichern</button>
+    </form>
+</body>
+
+</html>

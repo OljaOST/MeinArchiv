@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Kategorie löschen – MeinArchiv</title>
+</head>
+
+<body>
+    <h1>Kategorie löschen</h1>
+
+    <p>Möchtest du die Kategorie „{{ kategorie.name }}“ löschen?</p>
+
+    <p>
+        Anzahl zugeordneter Dokumente
+        <strong>{{ anzahl_dokumente }}</strong>
+    </p>
+
+    <p>
+        Die zugeordneten Dokumente erscheinen anschliessend
+        unter „Ohne Kategorie“.
+    </p>
+
+    <form action="{{ url_for('kategorie_loeschen',
+                             kategorie_id=kategorie.id) }}" method="post">
+
+        <button type="submit">Kategorie endgültig löschen</button>
+    </form>
+
+    <p>
+        <a href="{{ url_for('kategorien') }}">Abbrechen</a>
+    </p>
+</body>
+
+</html>
