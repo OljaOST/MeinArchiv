@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Kategorien – MeinArchiv</title>
+</head>
+
+<body>
+    <a href="/">Zurück zur Startseite</a>
+
+    <h1>Kategorien verwalten</h1>
+
+    {% if kategorien %}
+    <ul>
+        {% for kategorie in kategorien %}
+        <li>{{ kategorie.name }}</li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p>Es sind noch keine Kategorien vorhanden.</p>
+    {% endif %}
+
+    <h2>Neue Kategorie</h2>
+
+    <form action="{{ url_for('kategorie_speichern') }}" method="post">
+        <label for="name">Kategoriename</label>
+
+        <input type="text" id="name" name="name" maxlength="60" placeholder="Zum Beispiel Rechnungen" required>
+
+        <button type="submit">Kategorie hinzufügen</button>
+    </form>
+</body>
+
+</html>

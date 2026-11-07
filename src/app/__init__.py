@@ -1,6 +1,8 @@
+from flask_migrate import Migrate
+
 from io import BytesIO
 
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 import os
 from pathlib import Path
@@ -21,7 +23,7 @@ from flask import (
 
 from sqlalchemy import URL
 
-from .datenbank import Dokument, db
+from .datenbank import Dokument, Kategorie, db
 
 PROJEKTORDNER = Path(__file__).resolve().parents[2]
 load_dotenv(PROJEKTORDNER / ".env")
@@ -40,6 +42,11 @@ app.config["SQLALCHEMY_DATABASE_URI"] = URL.create(
 
 db.init_app(app)
 
+migrate = Migrate(
+    app,
+    db,
+    directory=str(PROJEKTORDNER / "migrations"),
+)
 
 @app.cli.command("init-db")
 def init_db():
@@ -123,3 +130,45 @@ def dokument_download(dokument_id):
         download_name=dokument.dateiname,
         mimetype="application/octet-stream",
     )
+
+@app.route("/kategorien")
+def kategorien():
+    try:
+        abfrage = db.select(
+            Kategorie.id,
+            Kategorie.name,
+        ).order_by(Kategorie.name)
+
+        gespeicherte_kategorien = db.session.execute(abfrage).all()
+    except SQLAlchemyError:
+        db.session.rollback()
+        return jsonify(fehler="Die Kategorien konnten nicht geladen werden."), 503
+
+    return render_template(
+        "kategorien.html",
+        kategorien=gespeicherte_kategorien,
+    )
+
+
+@app.route("/kategorien/speichern", methods=["POST"])
+def kategorie_speichern():
+    name = request.form.get("name", "").strip()
+
+    if not name or len(name) > 60:
+        return jsonify(
+            fehler="Bitte einen Kategorienamen mit 1 bis 60 Zeichen eingeben."
+        ), 400
+
+    kategorie = Kategorie(name=name)
+
+    try:
+        db.session.add(kategorie)
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify(fehler="Diese Kategorie ist bereits vorhanden."), 409
+    except SQLAlchemyError:
+        db.session.rollback()
+        return jsonify(fehler="Die Kategorie konnte nicht gespeichert werden."), 503
+
+    return redirect(url_for("kategorien"), code=303)
