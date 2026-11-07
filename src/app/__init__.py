@@ -58,23 +58,38 @@ def init_db():
 def index():
     return app.send_static_file("index.html")
 
-
 @app.route("/dokumente")
 def dokumente():
     try:
-        abfrage = db.select(
-            Dokument.id,
-            Dokument.dateiname,
-        ).order_by(Dokument.id.desc())
+        dokument_abfrage = (
+            db.select(
+                Dokument.id,
+                Dokument.dateiname,
+                Kategorie.name.label("kategoriename"),
+            )
+            .outerjoin(
+                Kategorie,
+                Dokument.kategorie_id == Kategorie.id,
+            )
+            .order_by(Dokument.id.desc())
+        )
 
-        gespeicherte_dokumente = db.session.execute(abfrage).all()
+        gespeicherte_dokumente = db.session.execute(dokument_abfrage).all()
+
+        kategorie_abfrage = db.select(
+            Kategorie.id,
+            Kategorie.name,
+        ).order_by(Kategorie.name)
+
+        gespeicherte_kategorien = db.session.execute(kategorie_abfrage).all()
     except SQLAlchemyError:
         db.session.rollback()
-        return jsonify(fehler="Die Dokumente konnten nicht geladen werden."), 503
+        return jsonify(fehler="Die Übersicht konnte nicht geladen werden."), 503
 
     return render_template(
         "dokumente.html",
         dokumente=gespeicherte_dokumente,
+        kategorien=gespeicherte_kategorien,
     )
 
 @app.route("/dokumente/speichern", methods=["POST"])
@@ -99,14 +114,36 @@ def dokument_speichern():
     if not inhalt:
         return jsonify(fehler="Die Datei ist leer."), 400
 
-    dokument = Dokument(
-        dateiname=dateiname,
-        inhalt=inhalt,
-    )
+    kategorie_wert = request.form.get("kategorie_id", "")
 
     try:
+        kategorie_id = int(kategorie_wert) if kategorie_wert else None
+    except ValueError:
+        return jsonify(fehler="Bitte eine gültige Kategorie auswählen."), 400
+
+    try:
+        if kategorie_id is not None:
+            kategorie = db.session.get(Kategorie, kategorie_id)
+
+            if kategorie is None:
+                return jsonify(
+                    fehler="Die ausgewählte Kategorie existiert nicht mehr."
+                ), 400
+
+        dokument = Dokument(
+            dateiname=dateiname,
+            inhalt=inhalt,
+            kategorie_id=kategorie_id,
+        )
+
         db.session.add(dokument)
         db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify(
+            fehler="Die Zuordnung konnte nicht gespeichert werden. "
+            "Bitte die Seite neu laden und die Kategorie erneut auswählen."
+        ), 409
     except SQLAlchemyError:
         db.session.rollback()
         return jsonify(fehler="Die Datei konnte nicht gespeichert werden."), 503
