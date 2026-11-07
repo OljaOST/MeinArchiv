@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Meine Dokumente – MeinArchiv</title>
+</head>
+
+<body>
+    <a href="/">Zurück zur Startseite</a>
+
+    <h1>Meine Dokumente</h1>
+
+    {% if dokumente %}
+    <ul>
+        {% for dokument in dokumente %}
+        <li>
+            {{ dokument.dateiname }}
+            <a href="{{ url_for('dokument_download',
+                                        dokument_id=dokument.id) }}">
+                Herunterladen
+            </a>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p>Es sind noch keine Dokumente vorhanden.</p>
+    {% endif %}
+
+    <h2>Dokument hinzufügen</h2>
+
+    <form action="/dokumente/speichern" method="post" enctype="multipart/form-data">
+
+        <label for="dokument">Datei auswählen</label>
+
+        <input type="file" id="dokument" name="dokument" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" required>
+
+        <button type="submit">Dokument speichern</button>
+    </form>
+</body>
+
+</html>
