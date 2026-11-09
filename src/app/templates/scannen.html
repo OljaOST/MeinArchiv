@@ -1,48 +1,61 @@
 <!DOCTYPE html>
 <html lang="de">
-
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Scannen – MeinArchiv</title>
     <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/scannen.css">
+    <script src="/static/scannen.js" defer></script>
 </head>
-
 <body>
     <a href="/">Zurück zur Startseite</a>
-
     <main>
         <h1>Dokument scannen</h1>
+        <p>Fotografiere das Dokument bei guter Beleuchtung. Prüfe und bearbeite das Foto vor dem Hochladen.</p>
+        <form id="scan-formular" action="{{ url_for('dokument_vorbereiten') }}" method="post" enctype="multipart/form-data">
+            <label for="aufnahme">Dokument fotografieren oder Bild auswählen</label>
+            <input type="file" id="aufnahme" name="dokument" accept="image/jpeg,image/png" capture="environment" aria-describedby="kamera-hinweis" required>
+            <p id="kamera-hinweis">Auf unterstützten Smartphones öffnet sich die Kamera. Am Computer kannst du ein JPG- oder PNG-Bild auswählen. Maximal 10 MB.</p>
 
-        <p>
-            Fotografiere dein Dokument möglichst gerade
-            und bei guter Beleuchtung.
-        </p>
+            <section id="scan-editor" aria-labelledby="vorschau-titel" hidden>
+                <h2 id="vorschau-titel">Foto prüfen</h2>
+                <div class="scan-bildbereich">
+                    <canvas id="scan-bild" role="img" aria-label="Vorschau des Dokuments"></canvas>
+                    <div id="scan-ausschnitt" aria-hidden="true" hidden></div>
+                </div>
+                <p id="scan-abmessungen" class="scan-hinweis"></p>
+                <div class="scan-werkzeuge" role="group" aria-label="Foto bearbeiten">
+                    <button type="button" id="scan-links" class="scan-nebenaktion">↶ Links drehen</button>
+                    <button type="button" id="scan-rechts" class="scan-nebenaktion">↷ Rechts drehen</button>
+                    <button type="button" id="scan-zuschneiden" class="scan-nebenaktion" aria-expanded="false" aria-controls="scan-zuschnitt">Zuschneiden</button>
+                    <button type="button" id="scan-reset" class="scan-nebenaktion">Original wiederherstellen</button>
+                </div>
 
-        <form action="{{ url_for('dokument_vorbereiten') }}" method="post" enctype="multipart/form-data">
-            <label for="aufnahme">
-                Dokument fotografieren oder Bild auswählen
-            </label>
+                <fieldset id="scan-zuschnitt" hidden>
+                    <legend>Ausschnitt festlegen</legend>
+                    <p>Bewege die Regler, um die Ränder abzuschneiden. Der markierte Bereich bleibt erhalten.</p>
+                    <label for="rand-links">Links entfernen: <output id="wert-links" for="rand-links">0 %</output></label>
+                    <input type="range" id="rand-links" min="0" max="95" value="0">
+                    <label for="rand-rechts">Rechts entfernen: <output id="wert-rechts" for="rand-rechts">0 %</output></label>
+                    <input type="range" id="rand-rechts" min="0" max="95" value="0">
+                    <label for="rand-oben">Oben entfernen: <output id="wert-oben" for="rand-oben">0 %</output></label>
+                    <input type="range" id="rand-oben" min="0" max="95" value="0">
+                    <label for="rand-unten">Unten entfernen: <output id="wert-unten" for="rand-unten">0 %</output></label>
+                    <input type="range" id="rand-unten" min="0" max="95" value="0">
+                    <div class="scan-werkzeuge">
+                        <button type="button" id="scan-ausschneiden">Ausschnitt übernehmen</button>
+                        <button type="button" id="scan-abbrechen" class="scan-nebenaktion">Abbrechen</button>
+                    </div>
+                </fieldset>
+            </section>
 
-            <input type="file" id="aufnahme" name="dokument" accept="image/jpeg,image/png" capture="environment"
-                aria-describedby="kamera-hinweis" required>
-
-            <p id="kamera-hinweis">
-                Auf unterstützten Smartphones öffnet sich die Kamera.
-                Am Computer kannst du ein gespeichertes Bild auswählen.
-            </p>
-
-            <figure id="bildvorschau" hidden>
-                <img id="vorschaubild" alt="Vorschau des aufgenommenen Dokuments">
-                <figcaption>
-                    Prüfe, ob das Dokument vollständig und gut lesbar ist.
-                </figcaption>
-            </figure>
-
-            <button type="submit">Foto übernehmen</button>
+            <p id="scan-status" role="status" aria-live="polite"></p>
+            <p id="scan-fehler" role="alert" hidden></p>
+            <button type="submit" id="scan-uebernehmen" disabled>Foto übernehmen</button>
+            <p class="scan-hinweis">Die Bildbearbeitung erfolgt auf deinem Gerät. Mit „Foto übernehmen“ wird das bearbeitete Foto in MeinArchiv hochgeladen. Die Freigabe zur Übermittlung an OpenAI folgt im nächsten Schritt.</p>
+            <noscript><p>Bitte aktiviere JavaScript für die Bildbearbeitung oder verwende <a href="/dokumente#dokument-hinzufuegen">Hochladen</a>.</p></noscript>
         </form>
     </main>
-    <script src="/static/scannen.js" defer></script>
 </body>
-
 </html>

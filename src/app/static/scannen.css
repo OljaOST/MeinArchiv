@@ -1,0 +1,99 @@
+/* Ergänzt style.css ausschliesslich auf der Scan-Seite. */
+#scan-formular [hidden] {
+    display: none !important;
+}
+
+.scan-bildbereich {
+    position: relative;
+    overflow: hidden;
+    width: fit-content;
+    max-width: 100%;
+    margin: 16px auto;
+    background: #e8edf5;
+    border: 1px solid #b9c8dc;
+    border-radius: 8px;
+}
+
+#scan-bild {
+    display: block;
+    max-width: 100%;
+    max-height: 60vh;
+    width: auto;
+    height: auto;
+}
+
+#scan-ausschnitt {
+    position: absolute;
+    border: 3px solid #0967df;
+    box-shadow: 0 0 0 2000px rgb(0 0 0 / 45%);
+    pointer-events: none;
+}
+
+.scan-werkzeuge {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 16px 0;
+}
+
+.scan-werkzeuge button {
+    margin: 0;
+}
+
+#scan-formular .scan-nebenaktion {
+    border: 1px solid #b9c8dc;
+    background: #edf4ff;
+    color: #0755b8;
+}
+
+#scan-formular .scan-nebenaktion:hover {
+    background: #dceaff;
+}
+
+#scan-formular button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+#scan-zuschnitt {
+    min-width: 0;
+    margin: 20px 0;
+    padding: 16px;
+    border: 1px solid #b9c8dc;
+    border-radius: 8px;
+}
+
+#scan-zuschnitt legend {
+    padding: 0 6px;
+    font-weight: bold;
+}
+
+#scan-zuschnitt input[type="range"] {
+    display: block;
+    width: 100%;
+    margin: 0 0 20px;
+    min-height: 32px;
+    accent-color: #0967df;
+}
+
+.scan-hinweis {
+    color: #526078;
+    font-size: 14px;
+}
+
+#scan-fehler {
+    padding: 12px;
+    border-left: 4px solid #b42318;
+    background: #fff0ee;
+    color: #912018;
+}
+
+@media (max-width: 420px) {
+    #scan-formular {
+        padding: 14px;
+    }
+
+    .scan-werkzeuge button {
+        flex: 1 1 130px;
+    }
+}

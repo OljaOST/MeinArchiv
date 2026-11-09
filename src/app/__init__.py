@@ -14,6 +14,8 @@ from openai import APIError, OpenAI
 
 from .ki import erkenne_dokument
 
+from .startseite import startseite_anzeigen, kategorie_dokumente_anzeigen
+
 import os
 from pathlib import Path
 
@@ -70,7 +72,7 @@ def init_db():
 
 @app.route("/")
 def index():
-    return app.send_static_file("index.html")
+    return startseite_anzeigen()
 
 @app.route("/dokumente")
 def dokumente():
@@ -714,3 +716,11 @@ def entwurf_verwerfen(dokument_id):
 @app.route("/scannen")
 def scannen():
     return render_template("scannen.html")
+
+@app.route("/einfuegen")
+def einfuegen():
+    return render_template("einfuegen.html")
+
+@app.route("/kategorien/<int:kategorie_id>/dokumente")
+def kategorie_dokumente(kategorie_id):
+    return kategorie_dokumente_anzeigen(kategorie_id)

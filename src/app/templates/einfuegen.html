@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Einfügen – MeinArchiv</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/einfuegen.css">
+    <script src="/static/einfuegen.js" defer></script>
+</head>
+<body>
+    <a href="/">Zurück zur Startseite</a>
+    <main>
+        <h1>Dokument einfügen</h1>
+        <p>Übernimm ein kopiertes Bild oder ein Dokument aus einer anderen Anwendung.</p>
+        <form id="einfuegen-formular" action="{{ url_for('dokument_vorbereiten') }}" method="post" enctype="multipart/form-data">
+            <div id="einfuegebereich" tabindex="0" role="group" aria-label="Dokument aus der Zwischenablage einfügen" aria-describedby="einfuegen-hinweis">
+                <span class="einfuegen-symbol" aria-hidden="true">▤</span>
+                <h2>Dokument hier einsetzen</h2>
+                <p id="einfuegen-hinweis">Klicke in diesen Bereich und drücke ⌘ + V am Mac oder Strg + V unter Windows.</p>
+                <button type="button" id="zwischenablage-lesen">Aus Zwischenablage einfügen</button>
+            </div>
+            <p class="einfuegen-hinweis">Bilder lassen sich in unterstützten Browsern direkt einfügen. Ob kopierte PDF- und Word-Dateien verfügbar sind, hängt vom Browser und der Quellanwendung ab. Falls es nicht klappt, wähle die Datei unten aus.</p>
+
+            <label for="ersatz-datei">Alternativ: Dokument auswählen</label>
+            <input type="file" id="ersatz-datei" name="dokument" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
+            <p class="einfuegen-hinweis">PDF, JPG, PNG oder Word · maximal 10 MB · kein reiner Text</p>
+
+            <section id="eingefuegtes-dokument" aria-labelledby="dokument-titel" hidden>
+                <h2 id="dokument-titel">Ausgewähltes Dokument</h2>
+                <p id="eingefuegter-name"></p>
+                <p id="eingefuegte-groesse" class="einfuegen-hinweis"></p>
+                <img id="eingefuegtes-bild" alt="Vorschau des eingefügten Bildes" hidden>
+                <p id="dokument-vorschau-hinweis" class="einfuegen-hinweis" hidden>Für dieses Dateiformat wird hier keine Bildvorschau angezeigt. Prüfe den Dateinamen vor dem Übernehmen.</p>
+                <button type="button" id="eingefuegtes-entfernen" class="einfuegen-nebenaktion">Auswahl entfernen</button>
+            </section>
+
+            <p id="einfuegen-status" role="status" aria-live="polite"></p>
+            <p id="einfuegen-fehler" role="alert" hidden></p>
+            <button type="submit" id="dokument-uebernehmen" disabled>Dokument übernehmen</button>
+            <p class="einfuegen-hinweis">Das Dokument wird erst mit „Dokument übernehmen“ in MeinArchiv hochgeladen. Die Freigabe zur Übermittlung an OpenAI erfolgt anschliessend separat.</p>
+            <noscript><p>Bitte aktiviere JavaScript oder verwende <a href="/dokumente#dokument-hinzufuegen">Hochladen</a>.</p></noscript>
+        </form>
+    </main>
+</body>
+</html>

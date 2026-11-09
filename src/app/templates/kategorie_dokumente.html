@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ kategorie.name if kategorie else 'Kategorie' }} – MeinArchiv</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='startseite.css') }}">
+</head>
+<body>
+    <a href="{{ url_for('index') }}">Zurück zur Startseite</a>
+    <main>
+        {% if ladefehler %}
+        <section class="start-ladefehler" role="alert">
+            <h1>Kategorie momentan nicht verfügbar</h1>
+            <p>Die Dokumente konnten nicht geladen werden. Bitte versuche es erneut.</p>
+        </section>
+        {% else %}
+        <h1 class="start-kategorie-titel">{{ kategorie.name }}</h1>
+        <form action="{{ url_for('kategorie_dokumente', kategorie_id=kategorie.id) }}" method="get" role="search">
+            <label for="kategorie-suche">Nach Dateiname in dieser Kategorie suchen</label>
+            <input type="search" id="kategorie-suche" name="q" value="{{ suche }}" placeholder="Zum Beispiel Firmenname">
+            <div class="start-filteraktionen">
+                <button type="submit">Suchen</button>
+                <a href="{{ url_for('kategorie_dokumente', kategorie_id=kategorie.id) }}">Suche zurücksetzen</a>
+            </div>
+        </form>
+        {% if dokumente %}
+        <p>{{ dokumente|length }} {{ 'Dokument' if dokumente|length == 1 else 'Dokumente' }}{% if suche %} für „{{ suche }}“{% endif %}</p>
+        <ul class="dokumentliste">
+            {% for dokument in dokumente %}
+            <li class="dokumenteintrag">
+                <div class="dokument-info">
+                    <strong>{{ dokument.dateiname }}</strong>
+                    {% if dokument.ablagedatum %}<span>Ablage: {{ dokument.ablagedatum.strftime('%d.%m.%Y') }}</span>{% endif %}
+                </div>
+                <div class="dokument-aktionen">
+                    <a href="{{ url_for('dokument_download', dokument_id=dokument.id) }}">Herunterladen</a>
+                    <a href="{{ url_for('dokument_kategorie', dokument_id=dokument.id) }}">Kategorie ändern</a>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% elif suche %}
+        <p class="start-leer">Keine Dokumente für „{{ suche }}“ in dieser Kategorie gefunden.</p>
+        {% else %}
+        <p class="start-leer">In dieser Kategorie sind noch keine Dokumente abgelegt.</p>
+        {% endif %}
+        {% endif %}
+        <p><a href="{{ url_for('dokumente') }}">Alle Dokumente anzeigen</a></p>
+    </main>
+</body>
+</html>

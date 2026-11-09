@@ -1,0 +1,71 @@
+#einfuegen-formular [hidden] {
+    display: none !important;
+}
+
+#einfuegebereich {
+    padding: 24px 16px;
+    border: 2px dashed #c6b1e5;
+    border-radius: 12px;
+    background: #f7f2ff;
+    text-align: center;
+}
+
+#einfuegebereich:focus-visible {
+    outline: 3px solid #63349a;
+    outline-offset: 3px;
+}
+
+.einfuegen-symbol {
+    color: #63349a;
+    font-size: 40px;
+}
+
+#einfuegebereich h2 {
+    margin: 8px 0;
+    font-size: 22px;
+}
+
+.einfuegen-hinweis {
+    color: #526078;
+    font-size: 14px;
+}
+
+#eingefuegtes-dokument {
+    margin-top: 24px;
+    padding: 16px;
+    border: 1px solid #d9e3f2;
+    border-radius: 12px;
+    background: #f4f7fc;
+}
+
+#eingefuegter-name {
+    font-weight: bold;
+    overflow-wrap: anywhere;
+}
+
+#eingefuegtes-bild {
+    display: block;
+    max-width: 100%;
+    max-height: 50vh;
+    margin: 16px auto;
+    border-radius: 8px;
+    object-fit: contain;
+}
+
+#einfuegen-formular .einfuegen-nebenaktion {
+    border: 1px solid #b9c8dc;
+    background: #edf4ff;
+    color: #0755b8;
+}
+
+#einfuegen-formular button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+#einfuegen-fehler {
+    padding: 12px;
+    border-left: 4px solid #b42318;
+    background: #fff0ee;
+    color: #912018;
+}

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>MeinArchiv</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='startseite.css') }}">
+</head>
+<body>
+    <header class="app-header">
+        <span class="app-logo" aria-hidden="true">▤</span>
+        <div>
+            <h1>MeinArchiv</h1>
+            <p>Dokumente ablegen, finden und verwalten.</p>
+        </div>
+    </header>
+    <main>
+        <div class="start-abschnittskopf">
+            <h2>Meine Dokumente</h2>
+            {% if anzahl is not none %}
+            <span id="archiv-anzahl" class="start-anzahl">{{ anzahl }} {{ 'Dokument' if anzahl == 1 else 'Dokumente' }}</span>
+            {% endif %}
+        </div>
+
+        <form class="start-suche" action="{{ url_for('dokumente') }}" method="get" role="search">
+            <label for="start-suche">Nach Dateiname suchen</label>
+            <div class="start-suchzeile">
+                <input type="search" id="start-suche" name="q" placeholder="Zum Beispiel Rechnung oder Firmenname">
+                <button type="submit">Suchen</button>
+            </div>
+        </form>
+
+        <nav class="aktionen" aria-label="Dokumentaktionen">
+            <a class="aktion-scannen" href="{{ url_for('scannen') }}">
+                <span class="aktionssymbol" aria-hidden="true">▣</span>
+                <span class="aktionstitel">Scannen</span>
+                <span class="aktionsbeschreibung">Mit der Kamera erfassen</span>
+            </a>
+            <a class="aktion-hochladen" href="{{ url_for('dokumente') }}#dokument-hinzufuegen">
+                <span class="aktionssymbol" aria-hidden="true">↑</span>
+                <span class="aktionstitel">Hochladen</span>
+                <span class="aktionsbeschreibung">Dokument auswählen</span>
+            </a>
+            <a class="aktion-einfuegen" href="{{ url_for('einfuegen') }}">
+                <span class="aktionssymbol" aria-hidden="true">▤</span>
+                <span class="aktionstitel">Einfügen</span>
+                <span class="aktionsbeschreibung">Dokument aus der Zwischenablage</span>
+            </a>
+            <a class="aktion-dokumente" href="{{ url_for('dokumente') }}">
+                <span class="aktionssymbol" aria-hidden="true">▱</span>
+                <span class="aktionstitel">Meine Dokumente</span>
+                <span class="aktionsbeschreibung">Gespeicherte Unterlagen verwalten</span>
+            </a>
+        </nav>
+
+        {% if ladefehler %}
+        <section class="start-ladefehler" role="alert">
+            <h2>Übersicht momentan nicht verfügbar</h2>
+            <p>Die gespeicherten Daten konnten nicht geladen werden. Bitte versuche es erneut.</p>
+            <a href="{{ url_for('index') }}">Erneut laden</a>
+        </section>
+        {% else %}
+        <section class="start-abschnitt" aria-labelledby="start-kategorien-titel">
+            <div class="start-abschnittskopf">
+                <h2 id="start-kategorien-titel">Kategorien</h2>
+                <a href="{{ url_for('kategorien') }}">Verwalten →</a>
+            </div>
+            {% if kategorien %}
+            <ul class="start-kategorien">
+                {% for kategorie in kategorien %}
+                <li>
+                    <a class="start-kategorie start-farbe-{{ loop.index0 % 6 }}" href="{{ url_for('kategorie_dokumente', kategorie_id=kategorie.id) }}">
+                        <span class="start-kategorie-symbol" aria-hidden="true">▱</span>
+                        <strong>{{ kategorie.name }}</strong>
+                        <span class="start-kategorie-anzahl">{{ kategorie.anzahl }} {{ 'Dokument' if kategorie.anzahl == 1 else 'Dokumente' }}</span>
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="start-leer">Noch keine Kategorien vorhanden. <a href="{{ url_for('kategorien') }}">Erste Kategorie anlegen</a></p>
+            {% endif %}
+        </section>
+
+        <section class="start-abschnitt" aria-labelledby="start-neu-titel">
+            <div class="start-abschnittskopf">
+                <h2 id="start-neu-titel">Zuletzt abgelegt</h2>
+                <a href="{{ url_for('dokumente') }}">Alle anzeigen →</a>
+            </div>
+            {% if dokumente %}
+            <ul class="dokumentliste start-dokumentliste">
+                {% for dokument in dokumente %}
+                <li class="dokumenteintrag">
+                    <div class="dokument-info">
+                        <strong>{{ dokument.dateiname }}</strong>
+                        <span>{{ dokument.kategoriename or 'Ohne Kategorie' }}{% if dokument.ablagedatum %} · <time datetime="{{ dokument.ablagedatum.isoformat() }}">{{ dokument.ablagedatum.strftime('%d.%m.%Y') }}</time>{% endif %}</span>
+                    </div>
+                    <div class="dokument-aktionen">
+                        <a href="{{ url_for('dokument_download', dokument_id=dokument.id) }}">Herunterladen</a>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="start-leer">Noch keine Dokumente abgelegt. Starte mit Scannen, Hochladen oder Einfügen.</p>
+            {% endif %}
+        </section>
+        {% endif %}
+    </main>
+</body>
+</html>
