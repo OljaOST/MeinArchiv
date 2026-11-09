@@ -1,3 +1,4 @@
+from .dokumentbearbeitung import dokument_angaben_bearbeiten
 from flask_migrate import Migrate
 
 from io import BytesIO
@@ -282,75 +283,7 @@ def kategorie_speichern():
     methods=["GET", "POST"],
 )
 def dokument_kategorie(dokument_id):
-    kategorie_id = None
-
-    if request.method == "POST":
-        kategorie_wert = request.form.get("kategorie_id", "")
-
-        try:
-            kategorie_id = int(kategorie_wert) if kategorie_wert else None
-        except ValueError:
-            return jsonify(fehler="Bitte eine gültige Kategorie auswählen."), 400
-
-    try:
-        dokument_abfrage = db.select(
-            Dokument.id,
-            Dokument.dateiname,
-            Dokument.kategorie_id,
-        ).where(Dokument.id == dokument_id)
-
-        dokument = db.session.execute(dokument_abfrage).one_or_none()
-
-        if dokument is None:
-            abort(404)
-
-        if request.method == "POST":
-            if kategorie_id is not None:
-                kategorie = db.session.get(Kategorie, kategorie_id)
-
-                if kategorie is None:
-                    return jsonify(
-                        fehler="Die ausgewählte Kategorie existiert nicht mehr."
-                    ), 400
-
-            aenderung = (
-                db.update(Dokument)
-                .where(Dokument.id == dokument_id)
-                .values(kategorie_id=kategorie_id)
-            )
-
-            ergebnis = db.session.execute(aenderung)
-
-            if ergebnis.rowcount != 1:
-                db.session.rollback()
-                abort(404)
-
-            db.session.commit()
-            return redirect(url_for("dokumente"), code=303)
-
-        kategorie_abfrage = db.select(
-            Kategorie.id,
-            Kategorie.name,
-        ).order_by(Kategorie.name)
-
-        kategorien = db.session.execute(kategorie_abfrage).all()
-    except IntegrityError:
-        db.session.rollback()
-        return jsonify(
-            fehler="Die Zuordnung konnte nicht gespeichert werden. "
-            "Bitte die Seite neu laden."
-        ), 409
-    except SQLAlchemyError:
-        db.session.rollback()
-        return jsonify(
-            fehler="Die Kategorie konnte nicht geladen oder geändert werden."
-        ), 503
-
-    return render_template(
-        "dokument_kategorie.html",
-        dokument=dokument,
-        kategorien=kategorien,
-    )
+    return dokument_angaben_bearbeiten(dokument_id)
 
 @app.route(
     "/kategorien/<int:kategorie_id>/bearbeiten",

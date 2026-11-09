@@ -37,7 +37,7 @@
                 <div class="dokument-aktionen">
                         <a href="{{ url_for('dokument_detail', dokument_id=dokument.id) }}">Öffnen</a>
                     <a href="{{ url_for('dokument_download', dokument_id=dokument.id) }}">Herunterladen</a>
-                    <a href="{{ url_for('dokument_kategorie', dokument_id=dokument.id) }}">Kategorie ändern</a>
+                    <a href="{{ url_for('dokument_kategorie', dokument_id=dokument.id) }}">Angaben bearbeiten</a>
                 </div>
             </li>
             {% endfor %}

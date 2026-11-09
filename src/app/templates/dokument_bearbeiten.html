@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Angaben bearbeiten – MeinArchiv</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='dokumentansicht.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='bearbeitung.css') }}">
+</head>
+<body>
+    <a href="{{ url_for('dokument_detail', dokument_id=dokument.id) }}">Zurück zum Dokument</a>
+    <main>
+        <h1 class="detail-titel">Angaben bearbeiten</h1>
+        <p class="detail-dateiname">{{ dokument.dateiname }}</p>
+        <p>Beim Speichern wird der Dateiname automatisch aus Ablagedatum, Kategorie und Firma erzeugt.</p>
+        <form action="{{ url_for('dokument_kategorie', dokument_id=dokument.id) }}" method="post">
+            <input type="hidden" name="bestaetigung" value="{{ bestaetigung }}">
+            {% if fehler %}<p class="bearbeitung-fehler" role="alert">{{ fehler }}</p>{% endif %}
+            <label for="firma">Firma</label>
+            <input type="text" id="firma" name="firma" value="{{ werte.firma }}" maxlength="120" required>
+
+            <label for="kategorie">Kategorie</label>
+            <select id="kategorie" name="kategorie_id">
+                <option value="" {% if not werte.kategorie_id %}selected{% endif %}>Ohne Kategorie</option>
+                {% for kategorie in kategorien %}
+                <option value="{{ kategorie.id }}" {% if werte.kategorie_id == kategorie.id|string %}selected{% endif %}>{{ kategorie.name }}</option>
+                {% endfor %}
+            </select>
+            <p class="detail-hinweis">Ohne Kategorie wird im Dateinamen „Dokument“ verwendet.</p>
+
+            {% if dokument.ablagedatum %}
+            <p><strong>Ablagedatum:</strong> {{ dokument.ablagedatum.strftime('%d.%m.%Y') }}</p>
+            <p class="detail-hinweis">Das ursprüngliche Ablagedatum bleibt bei der Bearbeitung erhalten.</p>
+            {% else %}
+            <p>Für dieses ältere Dokument fehlt das Ablagedatum. Ergänze den tatsächlichen Tag der Ablage.</p>
+            <label for="ablagedatum">Ablagedatum</label>
+            <input type="date" id="ablagedatum" name="ablagedatum" value="{{ werte.ablagedatum }}" max="{{ heute }}" required>
+            {% endif %}
+            <div class="bearbeitung-aktionen">
+                <button type="submit">Angaben und Dateiname speichern</button>
+                <a href="{{ url_for('dokument_detail', dokument_id=dokument.id) }}">Abbrechen</a>
+            </div>
+        </form>
+    </main>
+</body>
+</html>

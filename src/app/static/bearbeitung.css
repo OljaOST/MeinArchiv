@@ -1,0 +1,32 @@
+form label:not(:first-child) {
+    margin-top: 18px;
+}
+
+input[type="date"] {
+    max-width: 100%;
+    padding: 10px;
+    border: 1px solid #b9c8dc;
+    border-radius: 8px;
+    background: white;
+    font: inherit;
+}
+
+.bearbeitung-aktionen {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 20px;
+}
+
+.bearbeitung-aktionen button {
+    max-width: 100%;
+}
+
+.bearbeitung-fehler {
+    padding: 12px;
+    border-left: 4px solid #b42318;
+    border-radius: 8px;
+    background: #fff0ee;
+    color: #912018;
+}
