@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Export nicht verfügbar – MeinArchiv</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <main>
+        <h1>Export nicht abgeschlossen</h1>
+        <p role="alert">Die Dokumente konnten momentan nicht exportiert werden. Bitte versuche es erneut.</p>
+        <a href="{{ url_for('einstellungen') }}">Zurück zu den Einstellungen</a>
+    </main>
+</body>
+</html>

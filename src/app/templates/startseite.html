@@ -6,6 +6,7 @@
     <title>MeinArchiv</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='startseite.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='einstellungen.css') }}">
 </head>
 <body>
     <header class="app-header">
@@ -14,6 +15,7 @@
             <h1>MeinArchiv</h1>
             <p>Dokumente ablegen, finden und verwalten.</p>
         </div>
+        <a class="start-einstellungen" href="{{ url_for('einstellungen') }}" aria-label="Einstellungen" title="Einstellungen"><span aria-hidden="true">⚙</span></a>
     </header>
     <main>
         <div class="start-abschnittskopf">

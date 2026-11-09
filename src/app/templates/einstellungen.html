@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Einstellungen – MeinArchiv</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='einstellungen.css') }}">
+</head>
+<body>
+    <a href="{{ url_for('index') }}">Zurück zur Startseite</a>
+    <main>
+        <h1>Einstellungen</h1>
+        <section class="einstellungen-karte" aria-labelledby="speicherung-titel">
+            <div class="einstellungen-kopf">
+                <h2 id="speicherung-titel">Speicherung</h2>
+                <span class="einstellungen-status {{ 'status-bereit' if statistik is not none else 'status-fehler' }}">{{ 'Bereit' if statistik is not none else 'Nicht verfügbar' }}</span>
+            </div>
+            <p>Dokumente und ihre Angaben werden in der Datenbank dieses Archivs gespeichert.</p>
+            {% if statistik is not none %}
+            <dl class="einstellungen-angaben">
+                <dt>Abgelegte Dokumente</dt><dd id="status-dokumente">{{ statistik.dokumente }}</dd>
+                <dt>Offene Uploads</dt><dd id="status-entwuerfe">{{ statistik.entwuerfe }}</dd>
+                <dt>Kategorien</dt><dd>{{ statistik.kategorien }}</dd>
+                <dt>Dateigrösse insgesamt</dt><dd>{{ (statistik.bytes / (1024 * 1024))|round(2) }} MB</dd>
+            </dl>
+            {% else %}
+            <p class="einstellungen-fehler" role="alert">Die Archivdaten konnten nicht geladen werden. Bitte versuche es erneut.</p>
+            <a href="{{ url_for('einstellungen') }}">Erneut prüfen</a>
+            {% endif %}
+        </section>
+
+        <section class="einstellungen-karte" aria-labelledby="ki-titel">
+            <div class="einstellungen-kopf">
+                <h2 id="ki-titel">KI-Erkennung</h2>
+                <span class="einstellungen-status {{ 'status-bereit' if ki_eingerichtet else 'status-offen' }}">{{ 'Schlüssel hinterlegt' if ki_eingerichtet else 'Nicht eingerichtet' }}</span>
+            </div>
+            <p>Die Dokumenterkennung verwendet OpenAI online. Die Übermittlung erfolgt erst nach deiner Freigabe beim jeweiligen Dokument.</p>
+            <p class="einstellungen-hinweis">Diese Anzeige prüft nur, ob ein Schlüssel hinterlegt ist. Es wird keine Online-Anfrage ausgelöst.</p>
+        </section>
+
+        <section class="einstellungen-karte" aria-labelledby="benennung-titel">
+            <h2 id="benennung-titel">Automatische Dateinamen</h2>
+            <p>Der Name entsteht aus Ablagedatum, Dokumenttyp und Firma.</p>
+            <p class="einstellungen-beispiel">261109_Rechnung_Muster GmbH.pdf</p>
+            <p class="einstellungen-hinweis">Korrekturen unter „Angaben bearbeiten“ aktualisieren den Namen. Das ursprüngliche Ablagedatum bleibt erhalten.</p>
+        </section>
+
+        <section class="einstellungen-karte" aria-labelledby="export-titel">
+            <h2 id="export-titel">Dokumente exportieren</h2>
+            <p>Lade alle abgelegten Dokumente mit Kategorie, Firma und Ablagedatum als ZIP-Datei herunter.</p>
+            <p>Offene Uploads werden nicht exportiert. Gleichnamige Dateien erhalten getrennte Ordner.</p>
+            {% if statistik is not none %}
+            <a class="einstellungen-export" href="{{ url_for('dokument_export') }}">Dokumente als ZIP exportieren</a>
+            {% else %}
+            <p class="einstellungen-hinweis">Der Export ist wieder verfügbar, sobald die Archivdaten geladen werden können.</p>
+            {% endif %}
+            <p class="einstellungen-hinweis">Der Export verändert deine gespeicherten Daten nicht. Eine automatische Wiederherstellung aus dem ZIP ist derzeit nicht enthalten.</p>
+        </section>
+    </main>
+</body>
+</html>

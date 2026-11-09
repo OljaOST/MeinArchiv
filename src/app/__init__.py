@@ -23,6 +23,8 @@ from .dokumentansicht import (
     dokument_vorschau_anzeigen,
 )
 
+from .einstellungen import einstellungen_anzeigen, dokumente_exportieren
+
 
 import os
 from pathlib import Path
@@ -678,3 +680,12 @@ def dokument_vorschau(dokument_id):
 @app.route("/dokumente/<int:dokument_id>/loeschen", methods=["GET", "POST"])
 def dokument_loeschen(dokument_id):
     return dokument_loeschen_bestaetigen(dokument_id)
+
+@app.route("/einstellungen")
+def einstellungen():
+    return einstellungen_anzeigen()
+
+
+@app.route("/export/dokumente")
+def dokument_export():
+    return dokumente_exportieren()

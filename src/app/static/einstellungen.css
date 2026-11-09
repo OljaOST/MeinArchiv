@@ -1,0 +1,87 @@
+.app-header > div {
+    min-width: 0;
+    flex: 1;
+}
+
+.start-einstellungen {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    border: 1px solid #d9e3f2;
+    border-radius: 12px;
+    background: white;
+    color: #0755b8;
+    font-size: 26px;
+    text-decoration: none;
+}
+
+.einstellungen-karte {
+    margin: 24px 0;
+    padding: 20px;
+    border: 1px solid #d9e3f2;
+    border-radius: 12px;
+    background: white;
+}
+
+.einstellungen-karte h2 {
+    margin-top: 0;
+    font-size: 21px;
+}
+
+.einstellungen-kopf {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+}
+
+.einstellungen-status {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 13px;
+}
+
+.status-bereit { background: #dff5e8; color: #155d36; }
+.status-offen { background: #fff0d8; color: #8a4d00; }
+.status-fehler { background: #fff0ee; color: #912018; }
+
+.einstellungen-angaben {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    gap: 12px;
+}
+
+.einstellungen-angaben dt { color: #526078; }
+.einstellungen-angaben dd { margin: 0; overflow-wrap: anywhere; }
+.einstellungen-hinweis { color: #526078; font-size: 14px; }
+.einstellungen-beispiel { overflow-wrap: anywhere; font-weight: bold; }
+.einstellungen-fehler { color: #912018; }
+
+.einstellungen-export {
+    display: inline-block;
+    padding: 12px 16px;
+    border-radius: 8px;
+    background: #0967df;
+    color: white;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.einstellungen-export:hover { background: #0755b8; }
+.start-einstellungen:hover { background: #edf4ff; }
+.start-einstellungen:focus-visible,
+.einstellungen-export:focus-visible {
+    outline: 3px solid #0967df;
+    outline-offset: 3px;
+}
+
+@media (max-width: 380px) {
+    .einstellungen-karte { padding: 14px; }
+    .einstellungen-angaben { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+    .einstellungen-angaben dd { margin-bottom: 10px; }
+    .einstellungen-export { max-width: 100%; }
+}
