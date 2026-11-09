@@ -1,4 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import false
 
 db = SQLAlchemy()
 
@@ -16,7 +17,7 @@ class Dokument(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     dateiname = db.Column(db.String(255), nullable=False)
     inhalt = db.Column(db.LargeBinary, nullable=False)
-    
+
     firma = db.Column(db.String(120), nullable=True)
     ablagedatum = db.Column(db.Date, nullable=True)
 
@@ -32,3 +33,8 @@ class Dokument(db.Model):
     )
 
     kategorie = db.relationship("Kategorie")
+    ist_entwurf = db.Column(
+        db.Boolean,
+        nullable=False,
+        server_default=false(),
+    )

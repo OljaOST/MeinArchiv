@@ -4,7 +4,7 @@ from io import BytesIO
 
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
-from datetime import datetime
+from datetime import date, datetime
 
 from zoneinfo import ZoneInfo
 
@@ -84,6 +84,7 @@ def dokumente():
                 Kategorie,
                 Dokument.kategorie_id == Kategorie.id,
             )
+            .where(Dokument.ist_entwurf.is_(False))
             .order_by(Dokument.id.desc())
         )
 
@@ -441,12 +442,21 @@ def dokument_analysieren(dokument_id):
         dokument_abfrage = db.select(
             Dokument.id,
             Dokument.dateiname,
+            Dokument.ablagedatum,
+            Dokument.ist_entwurf,
         ).where(Dokument.id == dokument_id)
 
         dokument = db.session.execute(dokument_abfrage).one_or_none()
 
         if dokument is None:
             abort(404)
+
+        kategorie_abfrage = db.select(
+            Kategorie.id,
+            Kategorie.name,
+        ).order_by(Kategorie.name)
+
+        kategorien = db.session.execute(kategorie_abfrage).all()
 
         if request.method == "POST":
             if request.form.get("freigabe") != "ja":
@@ -465,10 +475,6 @@ def dokument_analysieren(dokument_id):
 
             inhalt = db.session.scalar(inhalt_abfrage)
 
-            kategorien = db.session.scalars(
-                db.select(Kategorie.name).order_by(Kategorie.name)
-            ).all()
-
             # Datenbank-Lesevorgang vor der Online-Anfrage beenden.
             db.session.rollback()
     except SQLAlchemyError:
@@ -482,7 +488,7 @@ def dokument_analysieren(dokument_id):
             ergebnis = erkenne_dokument(
                 inhalt,
                 Path(dokument.dateiname).suffix,
-                kategorien,
+                [kategorie.name for kategorie in kategorien],
             )
         except (APIError, ValueError) as ausnahme:
             fehler = (
@@ -494,7 +500,156 @@ def dokument_analysieren(dokument_id):
     return render_template(
         "dokument_analysieren.html",
         dokument=dokument,
+        kategorien=kategorien,
         ergebnis=ergebnis,
         fehler=fehler,
+        heute=datetime.now(ZoneInfo("Europe/Zurich")).date().isoformat(),
     ), status
 
+@app.route(
+    "/dokumente/<int:dokument_id>/ki-uebernehmen",
+    methods=["POST"],
+)
+def dokument_ki_uebernehmen(dokument_id):
+    firma = request.form.get("firma", "").strip()
+
+    if not firma or len(firma) > 120:
+        return jsonify(
+            fehler="Bitte eine Firma mit 1 bis 120 Zeichen eingeben."
+        ), 400
+
+    kategorie_wert = request.form.get("kategorie_id", "")
+    datum_wert = request.form.get("ablagedatum", "")
+
+    try:
+        kategorie_id = int(kategorie_wert) if kategorie_wert else None
+        angegebenes_datum = date.fromisoformat(datum_wert) if datum_wert else None
+    except ValueError:
+        return jsonify(
+            fehler="Bitte eine gültige Kategorie und ein gültiges Datum eingeben."
+        ), 400
+
+    try:
+        dokument_abfrage = (
+            db.select(
+                Dokument.id,
+                Dokument.dateiname,
+                Dokument.ablagedatum,
+                Dokument.ist_entwurf,
+            )
+            .where(Dokument.id == dokument_id)
+            .with_for_update()
+        )
+
+        dokument = db.session.execute(dokument_abfrage).one_or_none()
+
+        if dokument is None:
+            abort(404)
+
+        heute = datetime.now(ZoneInfo("Europe/Zurich")).date()
+
+        if dokument.ist_entwurf:
+            ablagedatum = heute
+        else:
+            ablagedatum = dokument.ablagedatum or angegebenes_datum
+
+        if ablagedatum is None:
+            return jsonify(
+                fehler="Für dieses Dokument muss das Ablagedatum ergänzt werden."
+            ), 400
+
+        if ablagedatum > heute:
+            return jsonify(
+                fehler="Das Ablagedatum darf nicht in der Zukunft liegen."
+            ), 400
+
+        kategoriename = "Dokument"
+
+        if kategorie_id is not None:
+            kategorie = db.session.get(Kategorie, kategorie_id)
+
+            if kategorie is None:
+                return jsonify(
+                    fehler="Die ausgewählte Kategorie existiert nicht mehr."
+                ), 400
+
+            kategoriename = kategorie.name
+
+        neuer_dateiname = erstelle_dateinamen(
+            ablagedatum,
+            kategoriename,
+            firma,
+            Path(dokument.dateiname).suffix.lower(),
+        )
+
+        aenderung = (
+            db.update(Dokument)
+            .where(Dokument.id == dokument_id)
+            .values(
+                firma=firma,
+                kategorie_id=kategorie_id,
+                ablagedatum=ablagedatum,
+                dateiname=neuer_dateiname,
+                ist_entwurf=False,
+            )
+        )
+
+        db.session.execute(aenderung)
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify(
+            fehler="Die Zuordnung konnte nicht gespeichert werden. "
+            "Bitte die Kategorie erneut auswählen."
+        ), 409
+    except SQLAlchemyError:
+        db.session.rollback()
+        return jsonify(
+            fehler="Die Angaben konnten nicht gespeichert werden."
+        ), 503
+
+    return redirect(url_for("dokumente"), code=303)
+
+@app.route("/dokumente/vorbereiten", methods=["POST"])
+def dokument_vorbereiten():
+    datei = request.files.get("dokument")
+
+    if datei is None or not datei.filename:
+        return jsonify(fehler="Bitte eine Datei auswählen."), 400
+
+    originalname = Path(datei.filename.replace("\\", "/")).name
+
+    if not originalname or len(originalname) > 255:
+        return jsonify(fehler="Der Dateiname ist ungültig oder zu lang."), 400
+
+    erlaubte_endungen = {".pdf", ".jpg", ".jpeg", ".png", ".doc", ".docx"}
+
+    if Path(originalname).suffix.lower() not in erlaubte_endungen:
+        return jsonify(fehler="Dieses Dateiformat wird nicht unterstützt."), 400
+
+    inhalt = datei.read()
+
+    if not inhalt:
+        return jsonify(fehler="Die Datei ist leer."), 400
+
+    entwurf = Dokument(
+        dateiname=originalname,
+        inhalt=inhalt,
+        ist_entwurf=True,
+    )
+
+    try:
+        db.session.add(entwurf)
+        db.session.flush()
+        entwurf_id = entwurf.id
+        db.session.commit()
+    except SQLAlchemyError:
+        db.session.rollback()
+        return jsonify(
+            fehler="Der Upload konnte nicht vorbereitet werden."
+        ), 503
+
+    return redirect(
+        url_for("dokument_analysieren", dokument_id=entwurf_id),
+        code=303,
+    )

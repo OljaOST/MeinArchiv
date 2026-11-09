@@ -19,17 +19,62 @@
     {% endif %}
 
     {% if ergebnis %}
-    <h2>Erkannte Angaben</h2>
+    <h2>Erkannte Angaben prüfen</h2>
 
-    <dl>
-        <dt>Kategorie</dt>
-        <dd>{{ ergebnis.kategorie or "Keine passende Kategorie erkannt" }}</dd>
+    <p>
+        Prüfe die Vorschläge und korrigiere sie bei Bedarf.
+        Beim Übernehmen wird auch der Dateiname daraus erzeugt.
+    </p>
 
-        <dt>Firma</dt>
-        <dd>{{ ergebnis.firma }}</dd>
-    </dl>
+    <form action="{{ url_for('dokument_ki_uebernehmen',
+                                 dokument_id=dokument.id) }}" method="post">
 
-    <p>Prüfe die Angaben auf ihre Richtigkeit.</p>
+        <p>
+            <label for="kategorie">Kategorie</label>
+
+            <select id="kategorie" name="kategorie_id">
+                <option value="" {% if ergebnis.kategorie is none %}selected{% endif %}>
+                    Ohne Kategorie
+                </option>
+
+                {% for kategorie in kategorien %}
+                <option value="{{ kategorie.id }}" {% if ergebnis.kategorie==kategorie.name %} selected {% endif %}>
+                    {{ kategorie.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </p>
+
+        <p>
+            <label for="firma">Firma</label>
+
+            <input type="text" id="firma" name="firma" value="{{ ergebnis.firma }}" maxlength="120" required>
+        </p>
+
+        {% if dokument.ist_entwurf %}
+        <p>Das Ablagedatum wird beim Speichern automatisch gesetzt.</p>
+        {% elif dokument.ablagedatum %}
+        <p>
+            Ablagedatum
+            {{ dokument.ablagedatum.strftime("%d.%m.%Y") }}
+        </p>
+        {% else %}
+        <p>
+            Für dieses ältere Dokument ist noch kein Ablagedatum
+            gespeichert. Ergänze den tatsächlichen Tag der Ablage.
+        </p>
+
+        <p>
+            <label for="ablagedatum">Ablagedatum</label>
+
+            <input type="date" id="ablagedatum" name="ablagedatum" max="{{ heute }}" required>
+        </p>
+        {% endif %}
+
+        <button type="submit">
+            Angaben übernehmen und Dateinamen aktualisieren
+        </button>
+    </form>
     {% else %}
     <p>
         Zur Analyse werden die vollständige Dokumentdatei und
@@ -45,7 +90,9 @@
             Ich möchte dieses Dokument an OpenAI übermitteln.
         </label>
 
-        <button type="submit">An OpenAI senden und analysieren</button>
+        <button type="submit">
+            An OpenAI senden und analysieren
+        </button>
     </form>
     {% endif %}
 </body>
