@@ -1,0 +1,34 @@
+name: Automatische Tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    env:
+      POSTGRES_PASSWORD: ci-placeholder
+      OPENAI_API_KEY: ""
+
+    steps:
+      - name: Projekt herunterladen
+        uses: actions/checkout@v6
+
+      - name: uv und Python einrichten
+        uses: astral-sh/setup-uv@v9
+        with:
+          version: "0.12.19"
+          python-version: "3.13"
+
+      - name: Python-Pakete installieren
+        run: uv sync --locked
+
+      - name: Tests ausführen
+        run: uv run --locked pytest
