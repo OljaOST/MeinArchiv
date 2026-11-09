@@ -22,17 +22,33 @@
         <h2>Meine Dokumente</h2>
 
         <nav class="aktionen" aria-label="Dokumentaktionen">
-            <a class="aktion-hochladen" href="/dokumente#dokument-hinzufuegen">
-
-                <span class="aktionssymbol" aria-hidden="true">↑</span>
-                <span class="aktionstitel">Hochladen</span>
+            <a class="aktion-scannen" href="/scannen">
+                <span class="aktionssymbol" aria-hidden="true">▣</span>
+                <span class="aktionstitel">Scannen</span>
                 <span class="aktionsbeschreibung">
-                    Neues Dokument ablegen
+                    Mit der Kamera erfassen
                 </span>
             </a>
 
-            <a class="aktion-dokumente" href="/dokumente">
+            <a class="aktion-hochladen" href="/dokumente#dokument-hinzufuegen">
+                <span class="aktionssymbol" aria-hidden="true">↑</span>
+                <span class="aktionstitel">Hochladen</span>
+                <span class="aktionsbeschreibung">
+                    Dokument auswählen
+                </span>
+            </a>
+
+            <button class="aktion-einfuegen" type="button" disabled>
                 <span class="aktionssymbol" aria-hidden="true">▤</span>
+                <span class="aktionstitel">Einfügen</span>
+                <span class="aktionsbeschreibung">
+                    Dokument aus der Zwischenablage
+                </span>
+                <span class="aktionsstatus">Noch nicht verfügbar</span>
+            </button>
+
+            <a class="aktion-dokumente" href="/dokumente">
+                <span class="aktionssymbol" aria-hidden="true">▱</span>
                 <span class="aktionstitel">Meine Dokumente</span>
                 <span class="aktionsbeschreibung">
                     Gespeicherte Unterlagen verwalten

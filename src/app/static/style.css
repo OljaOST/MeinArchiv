@@ -258,3 +258,69 @@ button:focus-visible,
 .button-gefahr:hover {
     background-color: #912018;
 }
+
+/* Aktionskacheln auf der Startseite */
+.aktionen>a,
+.aktionen>button {
+    min-width: 0;
+    min-height: 170px;
+    margin: 0;
+    padding: 18px;
+    border: 1px solid;
+    border-radius: 12px;
+    text-align: left;
+    overflow-wrap: anywhere;
+}
+
+.aktionen .aktion-scannen {
+    border-color: #0967df;
+    background-color: #0967df;
+    color: white;
+}
+
+.aktionen .aktion-hochladen {
+    border-color: #c5d8f2;
+    background-color: #e8f1ff;
+    color: #0755b8;
+}
+
+.aktionen .aktion-hochladen:hover {
+    background-color: #d5e6ff;
+}
+
+.aktionen .aktion-einfuegen {
+    border-color: #ddd0f5;
+    background-color: #f0e8fc;
+    color: #63349a;
+}
+
+.aktionen>button:disabled {
+    cursor: default;
+}
+
+.aktionsstatus {
+    display: block;
+    margin-top: 10px;
+    font-size: 12px;
+    font-weight: normal;
+}
+
+#bildvorschau {
+    margin: 20px 0;
+}
+
+#vorschaubild {
+    display: block;
+    max-width: 100%;
+    max-height: 500px;
+    margin: 0 auto;
+    border: 1px solid #d9e3f2;
+    border-radius: 8px;
+    object-fit: contain;
+}
+
+#bildvorschau figcaption {
+    margin-top: 10px;
+    color: #526078;
+    font-size: 14px;
+}

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Scannen – MeinArchiv</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+    <a href="/">Zurück zur Startseite</a>
+
+    <main>
+        <h1>Dokument scannen</h1>
+
+        <p>
+            Fotografiere dein Dokument möglichst gerade
+            und bei guter Beleuchtung.
+        </p>
+
+        <form action="{{ url_for('dokument_vorbereiten') }}" method="post" enctype="multipart/form-data">
+            <label for="aufnahme">
+                Dokument fotografieren oder Bild auswählen
+            </label>
+
+            <input type="file" id="aufnahme" name="dokument" accept="image/jpeg,image/png" capture="environment"
+                aria-describedby="kamera-hinweis" required>
+
+            <p id="kamera-hinweis">
+                Auf unterstützten Smartphones öffnet sich die Kamera.
+                Am Computer kannst du ein gespeichertes Bild auswählen.
+            </p>
+
+            <figure id="bildvorschau" hidden>
+                <img id="vorschaubild" alt="Vorschau des aufgenommenen Dokuments">
+                <figcaption>
+                    Prüfe, ob das Dokument vollständig und gut lesbar ist.
+                </figcaption>
+            </figure>
+
+            <button type="submit">Foto übernehmen</button>
+        </form>
+    </main>
+    <script src="/static/scannen.js" defer></script>
+</body>
+
+</html>

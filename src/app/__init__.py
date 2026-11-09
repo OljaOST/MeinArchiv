@@ -711,3 +711,6 @@ def entwurf_verwerfen(dokument_id):
         "entwurf_verwerfen.html",
         entwurf=entwurf,
     )
+@app.route("/scannen")
+def scannen():
+    return render_template("scannen.html")
