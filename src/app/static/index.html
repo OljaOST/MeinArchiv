@@ -5,19 +5,50 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>MeinArchiv</title>
+    <link rel="stylesheet" href="/static/style.css">
 </head>
 
 <body>
-    <h1>MeinArchiv</h1>
-    <p>Dokumente ablegen, finden und verwalten.</p>
+    <header class="app-header">
+        <span class="app-logo" aria-hidden="true">▤</span>
 
-    <nav aria-label="Hauptnavigation">
-        <p>
-            <a href="/dokumente">Meine Dokumente öffnen</a>
-        </p>
+        <div>
+            <h1>MeinArchiv</h1>
+            <p>Dokumente ablegen, finden und verwalten.</p>
+        </div>
+    </header>
 
-        <p>
-            <a href="/kategorien">Kategorien verwalten</a>
-        </p>
-    </nav>
+    <main>
+        <h2>Meine Dokumente</h2>
+
+        <nav class="aktionen" aria-label="Dokumentaktionen">
+            <a class="aktion-hochladen" href="/dokumente#dokument-hinzufuegen">
+
+                <span class="aktionssymbol" aria-hidden="true">↑</span>
+                <span class="aktionstitel">Hochladen</span>
+                <span class="aktionsbeschreibung">
+                    Neues Dokument ablegen
+                </span>
+            </a>
+
+            <a class="aktion-dokumente" href="/dokumente">
+                <span class="aktionssymbol" aria-hidden="true">▤</span>
+                <span class="aktionstitel">Meine Dokumente</span>
+                <span class="aktionsbeschreibung">
+                    Gespeicherte Unterlagen verwalten
+                </span>
+            </a>
+        </nav>
+
+        <section class="kategorienbereich">
+            <h2>Kategorien</h2>
+
+            <a class="kategorienlink" href="/kategorien">
+                Kategorien verwalten
+                <span aria-hidden="true"> →</span>
+            </a>
+        </section>
+    </main>
 </body>
+
+</html>

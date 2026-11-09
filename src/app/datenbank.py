@@ -16,6 +16,9 @@ class Dokument(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     dateiname = db.Column(db.String(255), nullable=False)
     inhalt = db.Column(db.LargeBinary, nullable=False)
+    
+    firma = db.Column(db.String(120), nullable=True)
+    ablagedatum = db.Column(db.Date, nullable=True)
 
     kategorie_id = db.Column(
         db.Integer,

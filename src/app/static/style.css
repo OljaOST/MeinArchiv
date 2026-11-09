@@ -1,0 +1,260 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    max-width: 720px;
+    margin: 40px auto;
+    padding: 0 20px;
+    background-color: #f4f7fc;
+    color: #172033;
+    font-family: Arial, sans-serif;
+    line-height: 1.5;
+}
+
+h1 {
+    margin-bottom: 8px;
+    font-size: 36px;
+}
+
+nav {
+    display: grid;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+nav p {
+    margin: 0;
+}
+
+nav a {
+    display: block;
+    padding: 18px;
+    border: 1px solid #d9e3f2;
+    border-radius: 12px;
+    background-color: #ffffff;
+    color: #0967df;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+nav a:hover {
+    background-color: #e8f1ff;
+}
+
+nav a:focus-visible {
+    outline: 3px solid #0967df;
+    outline-offset: 3px;
+}
+
+.app-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 32px;
+}
+
+.app-logo {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background-color: #0967df;
+    color: white;
+    font-size: 28px;
+}
+
+.app-header h1 {
+    margin: 0;
+    font-size: 24px;
+}
+
+.app-header p {
+    margin: 4px 0 0;
+    color: #526078;
+    font-size: 14px;
+}
+
+.aktionen {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: 16px;
+}
+
+.aktionen a {
+    min-height: 150px;
+}
+
+.aktionen .aktion-hochladen {
+    border-color: #0967df;
+    background-color: #0967df;
+    color: white;
+}
+
+.aktionen .aktion-hochladen:hover {
+    background-color: #0755b8;
+}
+
+.aktionen .aktion-dokumente {
+    border-color: #c7e8d4;
+    background-color: #dff5e8;
+    color: #155d36;
+}
+
+.aktionen .aktion-dokumente:hover {
+    background-color: #ccecd9;
+}
+
+.aktionssymbol,
+.aktionstitel,
+.aktionsbeschreibung {
+    display: block;
+}
+
+.aktionssymbol {
+    margin-bottom: 8px;
+    font-size: 28px;
+}
+
+.aktionsbeschreibung {
+    margin-top: 6px;
+    font-size: 14px;
+    font-weight: normal;
+}
+
+.kategorienbereich {
+    margin-top: 32px;
+}
+
+.kategorienlink {
+    display: block;
+    padding: 16px;
+    border: 1px solid #d9e3f2;
+    border-radius: 12px;
+    background-color: white;
+    color: #0967df;
+    font-weight: bold;
+}
+
+.dokumentliste {
+    display: grid;
+    gap: 12px;
+    padding: 0;
+    list-style: none;
+}
+
+.dokumenteintrag {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 18px;
+    border: 1px solid #d9e3f2;
+    border-radius: 12px;
+    background-color: white;
+}
+
+.dokument-info {
+    flex: 1 1 180px;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.dokument-info strong,
+.dokument-info span {
+    display: block;
+}
+
+.dokument-info span {
+    margin-top: 4px;
+    color: #526078;
+    font-size: 14px;
+}
+
+.dokument-aktionen {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.dokument-aktionen a {
+    display: inline-block;
+    padding: 8px 12px;
+    border: 1px solid #c5d8f2;
+    border-radius: 8px;
+    background-color: #edf4ff;
+    color: #0755b8;
+    font-size: 14px;
+    text-decoration: none;
+}
+
+.dokument-aktionen a:hover {
+    background-color: #dceaff;
+}
+
+form {
+    margin: 24px 0;
+    padding: 20px;
+    border: 1px solid #d9e3f2;
+    border-radius: 12px;
+    background-color: white;
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+}
+
+input,
+select,
+button {
+    font: inherit;
+}
+
+input[type="search"],
+input[type="text"],
+select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #b9c8dc;
+    border-radius: 8px;
+    background-color: white;
+}
+
+input[type="file"] {
+    max-width: 100%;
+}
+
+button {
+    margin-top: 12px;
+    padding: 10px 16px;
+    border: 0;
+    border-radius: 8px;
+    background-color: #0967df;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #0755b8;
+}
+
+input:focus-visible,
+select:focus-visible,
+button:focus-visible,
+.dokument-aktionen a:focus-visible {
+    outline: 3px solid #0967df;
+    outline-offset: 3px;
+}
+
+.button-gefahr {
+    background-color: #b42318;
+}
+
+.button-gefahr:hover {
+    background-color: #912018;
+}

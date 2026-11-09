@@ -4,6 +4,12 @@ from io import BytesIO
 
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
+from datetime import datetime
+
+from zoneinfo import ZoneInfo
+
+from .dateinamen import erstelle_dateinamen
+
 import os
 from pathlib import Path
 
@@ -108,15 +114,23 @@ def dokument_speichern():
     if datei is None or not datei.filename:
         return jsonify(fehler="Bitte eine Datei auswählen."), 400
 
-    dateiname = Path(datei.filename.replace("\\", "/")).name
+    originalname = Path(datei.filename.replace("\\", "/")).name
 
-    if not dateiname or len(dateiname) > 255:
+    if not originalname or len(originalname) > 255:
         return jsonify(fehler="Der Dateiname ist ungültig oder zu lang."), 400
 
+    endung = Path(originalname).suffix.lower()
     erlaubte_endungen = {".pdf", ".jpg", ".jpeg", ".png", ".doc", ".docx"}
 
-    if Path(dateiname).suffix.lower() not in erlaubte_endungen:
+    if endung not in erlaubte_endungen:
         return jsonify(fehler="Dieses Dateiformat wird nicht unterstützt."), 400
+
+    firma = request.form.get("firma", "").strip()
+
+    if not firma or len(firma) > 120:
+        return jsonify(
+            fehler="Bitte eine Firma mit 1 bis 120 Zeichen eingeben."
+        ), 400
 
     inhalt = datei.read()
 
@@ -131,6 +145,8 @@ def dokument_speichern():
         return jsonify(fehler="Bitte eine gültige Kategorie auswählen."), 400
 
     try:
+        kategoriename = "Dokument"
+
         if kategorie_id is not None:
             kategorie = db.session.get(Kategorie, kategorie_id)
 
@@ -139,9 +155,22 @@ def dokument_speichern():
                     fehler="Die ausgewählte Kategorie existiert nicht mehr."
                 ), 400
 
+            kategoriename = kategorie.name
+
+        ablagedatum = datetime.now(ZoneInfo("Europe/Zurich")).date()
+
+        dateiname = erstelle_dateinamen(
+            ablagedatum,
+            kategoriename,
+            firma,
+            endung,
+        )
+
         dokument = Dokument(
             dateiname=dateiname,
             inhalt=inhalt,
+            firma=firma,
+            ablagedatum=ablagedatum,
             kategorie_id=kategorie_id,
         )
 
@@ -151,7 +180,7 @@ def dokument_speichern():
         db.session.rollback()
         return jsonify(
             fehler="Die Zuordnung konnte nicht gespeichert werden. "
-            "Bitte die Seite neu laden und die Kategorie erneut auswählen."
+            "Bitte die Seite neu laden."
         ), 409
     except SQLAlchemyError:
         db.session.rollback()

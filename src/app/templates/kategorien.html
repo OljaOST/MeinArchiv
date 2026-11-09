@@ -5,6 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Kategorien – MeinArchiv</title>
+    <link rel="stylesheet" href="/static/style.css">
 </head>
 
 <body>
@@ -13,22 +14,24 @@
     <h1>Kategorien verwalten</h1>
 
     {% if kategorien %}
-    <ul>
+    <ul class="dokumentliste">
         {% for kategorie in kategorien %}
-        <li>
-            {{ kategorie.name }}
+        <li class="dokumenteintrag">
+            <div class="dokument-info">
+                <strong>{{ kategorie.name }}</strong>
+            </div>
 
-            <a href="{{ url_for('kategorie_bearbeiten',
-                        kategorie_id=kategorie.id) }}">
-                Umbenennen
-            </a>
+            <div class="dokument-aktionen">
+                <a href="{{ url_for('kategorie_bearbeiten',
+                                            kategorie_id=kategorie.id) }}">
+                    Umbenennen
+                </a>
 
-            <span aria-hidden="true"> | </span>
-
-            <a href="{{ url_for('kategorie_loeschen',
-                        kategorie_id=kategorie.id) }}">
-                Löschen
-            </a>
+                <a href="{{ url_for('kategorie_loeschen',
+                                            kategorie_id=kategorie.id) }}">
+                    Löschen
+                </a>
+            </div>
         </li>
         {% endfor %}
     </ul>
