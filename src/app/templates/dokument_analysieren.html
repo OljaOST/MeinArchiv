@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>KI-Analyse – MeinArchiv</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+    <a href="{{ url_for('dokumente') }}">Zurück zu meinen Dokumenten</a>
+
+    <h1>Dokument mit KI analysieren</h1>
+    <p>{{ dokument.dateiname }}</p>
+
+    {% if fehler %}
+    <p role="alert">{{ fehler }}</p>
+    {% endif %}
+
+    {% if ergebnis %}
+    <h2>Erkannte Angaben</h2>
+
+    <dl>
+        <dt>Kategorie</dt>
+        <dd>{{ ergebnis.kategorie or "Keine passende Kategorie erkannt" }}</dd>
+
+        <dt>Firma</dt>
+        <dd>{{ ergebnis.firma }}</dd>
+    </dl>
+
+    <p>Prüfe die Angaben auf ihre Richtigkeit.</p>
+    {% else %}
+    <p>
+        Zur Analyse werden die vollständige Dokumentdatei und
+        die Namen deiner Kategorien an OpenAI übermittelt.
+        Dabei können API-Kosten entstehen.
+    </p>
+
+    <form action="{{ url_for('dokument_analysieren',
+                                 dokument_id=dokument.id) }}" method="post">
+
+        <label>
+            <input type="checkbox" name="freigabe" value="ja" required>
+            Ich möchte dieses Dokument an OpenAI übermitteln.
+        </label>
+
+        <button type="submit">An OpenAI senden und analysieren</button>
+    </form>
+    {% endif %}
+</body>
+
+</html>

@@ -10,6 +10,10 @@ from zoneinfo import ZoneInfo
 
 from .dateinamen import erstelle_dateinamen
 
+from openai import APIError, OpenAI
+
+from .ki import erkenne_dokument
+
 import os
 from pathlib import Path
 
@@ -394,3 +398,103 @@ def kategorie_loeschen(kategorie_id):
         kategorie=kategorie,
         anzahl_dokumente=anzahl_dokumente,
     )
+
+@app.cli.command("ki-test")
+def ki_test():
+    if not os.getenv("OPENAI_API_KEY"):
+        raise click.ClickException(
+            "OPENAI_API_KEY wurde nicht gefunden. Bitte die .env prüfen."
+        )
+
+    try:
+        with OpenAI(timeout=30.0, max_retries=0) as client:
+            antwort = client.responses.create(
+                model="gpt-5.4-mini",
+                input="Antworte ausschließlich mit: Verbindung erfolgreich.",
+                reasoning={"effort": "none"},
+                max_output_tokens=100,
+                store=False,
+            )
+    except APIError as fehler:
+        status = getattr(fehler, "status_code", None)
+
+        raise click.ClickException(
+            f"OpenAI-Anfrage fehlgeschlagen. "
+            f"Fehlertyp: {type(fehler).__name__}, HTTP-Status: {status}"
+        ) from None
+
+    if not antwort.output_text.strip():
+        raise click.ClickException("OpenAI hat keinen Antworttext geliefert.")
+
+    click.echo(antwort.output_text)
+
+@app.route(
+    "/dokumente/<int:dokument_id>/analysieren",
+    methods=["GET", "POST"],
+)
+def dokument_analysieren(dokument_id):
+    ergebnis = None
+    fehler = None
+    status = 200
+
+    try:
+        dokument_abfrage = db.select(
+            Dokument.id,
+            Dokument.dateiname,
+        ).where(Dokument.id == dokument_id)
+
+        dokument = db.session.execute(dokument_abfrage).one_or_none()
+
+        if dokument is None:
+            abort(404)
+
+        if request.method == "POST":
+            if request.form.get("freigabe") != "ja":
+                return jsonify(
+                    fehler="Bitte die Übermittlung an OpenAI bestätigen."
+                ), 400
+
+            if not os.getenv("OPENAI_API_KEY"):
+                return jsonify(
+                    fehler="Der OpenAI-API-Schlüssel fehlt."
+                ), 503
+
+            inhalt_abfrage = db.select(
+                Dokument.inhalt
+            ).where(Dokument.id == dokument_id)
+
+            inhalt = db.session.scalar(inhalt_abfrage)
+
+            kategorien = db.session.scalars(
+                db.select(Kategorie.name).order_by(Kategorie.name)
+            ).all()
+
+            # Datenbank-Lesevorgang vor der Online-Anfrage beenden.
+            db.session.rollback()
+    except SQLAlchemyError:
+        db.session.rollback()
+        return jsonify(
+            fehler="Das Dokument konnte nicht geladen werden."
+        ), 503
+
+    if request.method == "POST":
+        try:
+            ergebnis = erkenne_dokument(
+                inhalt,
+                Path(dokument.dateiname).suffix,
+                kategorien,
+            )
+        except (APIError, ValueError) as ausnahme:
+            fehler = (
+                "Die KI-Analyse konnte nicht abgeschlossen werden. "
+                f"Fehlertyp: {type(ausnahme).__name__}"
+            )
+            status = 502
+
+    return render_template(
+        "dokument_analysieren.html",
+        dokument=dokument,
+        ergebnis=ergebnis,
+        fehler=fehler,
+    ), status
+

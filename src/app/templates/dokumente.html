@@ -44,6 +44,11 @@
                                         dokument_id=dokument.id) }}">
                     Kategorie ändern
                 </a>
+
+                <a href="{{ url_for('dokument_analysieren',
+                    dokument_id=dokument.id) }}">
+                    Mit KI analysieren
+                </a>
             </div>
         </li>
         {% endfor %}
