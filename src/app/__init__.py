@@ -42,13 +42,16 @@ app = Flask(__name__)
 app.config["TEMPLATES_AUTO_RELOAD"] = True
 app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024
 
-app.config["SQLALCHEMY_DATABASE_URI"] = URL.create(
-    drivername="postgresql+psycopg",
-    username="meinarchiv",
-    password=os.environ["POSTGRES_PASSWORD"],
-    host="127.0.0.1",
-    port=5432,
-    database="meinarchiv",
+app.config["SQLALCHEMY_DATABASE_URI"] = (
+    os.getenv("DATABASE_URL")
+    or URL.create(
+        drivername="postgresql+psycopg",
+        username="meinarchiv",
+        password=os.environ["POSTGRES_PASSWORD"],
+        host="127.0.0.1",
+        port=5432,
+        database="meinarchiv",
+    )
 )
 
 db.init_app(app)

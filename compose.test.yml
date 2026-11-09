@@ -1,0 +1,18 @@
+services:
+  db-test:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: meinarchiv_test
+      POSTGRES_USER: meinarchiv_test
+      POSTGRES_PASSWORD: nur-fuer-tests
+    ports:
+      - "127.0.0.1:5433:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U meinarchiv_test -d meinarchiv_test
+      interval: 5s
+      timeout: 5s
+      retries: 12

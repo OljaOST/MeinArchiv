@@ -14,8 +14,24 @@ jobs:
     timeout-minutes: 10
 
     env:
+      DATABASE_URL: postgresql+psycopg://meinarchiv_test:nur-fuer-tests@127.0.0.1:5433/meinarchiv_test
       POSTGRES_PASSWORD: ci-placeholder
       OPENAI_API_KEY: ""
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: meinarchiv_test
+          POSTGRES_USER: meinarchiv_test
+          POSTGRES_PASSWORD: nur-fuer-tests
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U meinarchiv_test -d meinarchiv_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
 
     steps:
       - name: Projekt herunterladen
