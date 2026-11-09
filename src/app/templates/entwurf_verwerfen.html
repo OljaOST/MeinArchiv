@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Entwurf verwerfen – MeinArchiv</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+    <a href="{{ url_for('dokumente') }}">Zurück zu meinen Dokumenten</a>
+
+    <h1>Upload-Entwurf verwerfen</h1>
+
+    <p>
+        Möchtest du den Entwurf
+        „{{ entwurf.dateiname }}“ endgültig verwerfen?
+    </p>
+
+    <p>
+        Dabei wird die zwischengespeicherte Datei
+        aus MeinArchiv gelöscht.
+    </p>
+
+    <form action="{{ url_for('entwurf_verwerfen',
+                             dokument_id=entwurf.id) }}" method="post">
+
+        <button type="submit" class="button-gefahr">
+            Entwurf endgültig verwerfen
+        </button>
+    </form>
+
+    <a href="{{ url_for('dokumente') }}">Abbrechen</a>
+</body>
+
+</html>

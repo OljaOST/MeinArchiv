@@ -61,6 +61,38 @@
     {% endif %}
     {% endif %}
 
+    <section aria-labelledby="entwuerfe-ueberschrift">
+        <h2 id="entwuerfe-ueberschrift">Offene Uploads</h2>
+
+        {% if entwuerfe %}
+        <p>Diese Dateien warten auf die endgültige Übernahme ins Archiv.</p>
+
+        <ul class="dokumentliste">
+            {% for entwurf in entwuerfe %}
+            <li class="dokumenteintrag">
+                <div class="dokument-info">
+                    <strong>{{ entwurf.dateiname }}</strong>
+                    <span>Upload-Entwurf</span>
+                </div>
+
+                <div class="dokument-aktionen">
+                    <a href="{{ url_for('dokument_analysieren',
+                                            dokument_id=entwurf.id) }}">
+                        Fortsetzen
+                    </a>
+                    <a href="{{ url_for('entwurf_verwerfen',
+                    dokument_id=entwurf.id) }}">
+                        Verwerfen
+                    </a>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p>Es gibt keine offenen Uploads.</p>
+        {% endif %}
+    </section>
+
     <h2 id="dokument-hinzufuegen">Dokument hinzufügen</h2>
 
     <form action="{{ url_for('dokument_vorbereiten') }}" method="post" enctype="multipart/form-data">

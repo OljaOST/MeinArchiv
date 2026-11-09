@@ -101,6 +101,17 @@ def dokumente():
         ).order_by(Kategorie.name)
 
         gespeicherte_kategorien = db.session.execute(kategorie_abfrage).all()
+
+        entwurf_abfrage = (
+            db.select(
+                Dokument.id,
+                Dokument.dateiname,
+            )
+            .where(Dokument.ist_entwurf.is_(True))
+            .order_by(Dokument.id.desc())
+        )
+
+        offene_entwuerfe = db.session.execute(entwurf_abfrage).all()
     except SQLAlchemyError:
         db.session.rollback()
         return jsonify(fehler="Die Übersicht konnte nicht geladen werden."), 503
@@ -109,6 +120,7 @@ def dokumente():
         "dokumente.html",
         dokumente=gespeicherte_dokumente,
         kategorien=gespeicherte_kategorien,
+        entwuerfe=offene_entwuerfe,
         suche=suche,
     )
 
@@ -652,4 +664,47 @@ def dokument_vorbereiten():
     return redirect(
         url_for("dokument_analysieren", dokument_id=entwurf_id),
         code=303,
+    )
+@app.route(
+    "/entwuerfe/<int:dokument_id>/verwerfen",
+    methods=["GET", "POST"],
+)
+def entwurf_verwerfen(dokument_id):
+    try:
+        entwurf_abfrage = db.select(
+            Dokument.id,
+            Dokument.dateiname,
+        ).where(
+            Dokument.id == dokument_id,
+            Dokument.ist_entwurf.is_(True),
+        )
+
+        entwurf = db.session.execute(entwurf_abfrage).one_or_none()
+
+        if entwurf is None:
+            abort(404)
+
+        if request.method == "POST":
+            loeschung = db.delete(Dokument).where(
+                Dokument.id == dokument_id,
+                Dokument.ist_entwurf.is_(True),
+            )
+
+            ergebnis = db.session.execute(loeschung)
+
+            if ergebnis.rowcount != 1:
+                db.session.rollback()
+                abort(404)
+
+            db.session.commit()
+            return redirect(url_for("dokumente"), code=303)
+    except SQLAlchemyError:
+        db.session.rollback()
+        return jsonify(
+            fehler="Der Entwurf konnte nicht geladen oder verworfen werden."
+        ), 503
+
+    return render_template(
+        "entwurf_verwerfen.html",
+        entwurf=entwurf,
     )
