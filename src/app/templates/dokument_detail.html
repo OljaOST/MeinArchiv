@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ dokument.dateiname }} – MeinArchiv</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='dokumentansicht.css') }}">
+</head>
+<body>
+    <a href="{{ url_for('dokumente') }}">Zurück zu meinen Dokumenten</a>
+    <main>
+        <h1 class="detail-titel">Dokument ansehen</h1>
+        <section class="detail-karte" aria-labelledby="detail-dateiname">
+            <h2 id="detail-dateiname">{{ dokument.dateiname }}</h2>
+            <dl class="detail-angaben">
+                <dt>Kategorie</dt><dd>{{ dokument.kategoriename or 'Ohne Kategorie' }}</dd>
+                <dt>Firma</dt><dd>{{ dokument.firma or 'Nicht hinterlegt' }}</dd>
+                <dt>Ablagedatum</dt><dd>{{ dokument.ablagedatum.strftime('%d.%m.%Y') if dokument.ablagedatum else 'Nicht hinterlegt' }}</dd>
+                <dt>Dateigrösse</dt><dd>{{ (dokument.groesse / 1024)|round(1) }} KB</dd>
+            </dl>
+            <div class="dokument-aktionen detail-aktionen">
+                <a href="{{ url_for('dokument_download', dokument_id=dokument.id) }}">Herunterladen</a>
+                <a href="{{ url_for('dokument_kategorie', dokument_id=dokument.id) }}">Kategorie ändern</a>
+                <a href="{{ url_for('dokument_analysieren', dokument_id=dokument.id) }}">Mit KI analysieren</a>
+            </div>
+        </section>
+
+        <section class="detail-karte" aria-labelledby="vorschau-ueberschrift">
+            <h2 id="vorschau-ueberschrift">Vorschau</h2>
+            {% if vorschau == 'bild' %}
+            <img class="detail-bild" src="{{ url_for('dokument_vorschau', dokument_id=dokument.id) }}" alt="Vorschau von {{ dokument.dateiname }}">
+            {% elif vorschau == 'pdf' %}
+            <iframe class="detail-pdf" src="{{ url_for('dokument_vorschau', dokument_id=dokument.id) }}" title="PDF-Vorschau von {{ dokument.dateiname }}" loading="lazy"></iframe>
+            <p class="detail-hinweis">Falls dein Browser das PDF hier nicht anzeigt, öffne die Vorschau separat oder lade die Datei herunter.</p>
+            {% else %}
+            <p>Für dieses Dateiformat gibt es hier keine Vorschau. Lade das Dokument herunter und öffne es auf deinem Gerät.</p>
+            {% endif %}
+            {% if vorschau %}
+            <p><a href="{{ url_for('dokument_vorschau', dokument_id=dokument.id) }}" target="_blank" rel="noopener">Vorschau in neuem Tab öffnen</a></p>
+            {% endif %}
+        </section>
+
+        <section class="detail-loeschbereich" aria-labelledby="loesch-ueberschrift">
+            <h2 id="loesch-ueberschrift">Dokument entfernen</h2>
+            <p>Auf der nächsten Seite kannst du das Löschen bestätigen oder abbrechen.</p>
+            <a class="detail-loeschlink" href="{{ url_for('dokument_loeschen', dokument_id=dokument.id) }}">Löschen …</a>
+        </section>
+    </main>
+</body>
+</html>

@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dokumentaktion nicht möglich – MeinArchiv</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <main>
+        <h1>Aktion nicht abgeschlossen</h1>
+        <p role="alert">{{ meldung }}</p>
+        <a href="{{ url_for('dokumente') }}">Zurück zu meinen Dokumenten</a>
+    </main>
+</body>
+</html>

@@ -97,6 +97,7 @@
                         <span>{{ dokument.kategoriename or 'Ohne Kategorie' }}{% if dokument.ablagedatum %} · <time datetime="{{ dokument.ablagedatum.isoformat() }}">{{ dokument.ablagedatum.strftime('%d.%m.%Y') }}</time>{% endif %}</span>
                     </div>
                     <div class="dokument-aktionen">
+                        <a href="{{ url_for('dokument_detail', dokument_id=dokument.id) }}">Öffnen</a>
                         <a href="{{ url_for('dokument_download', dokument_id=dokument.id) }}">Herunterladen</a>
                     </div>
                 </li>

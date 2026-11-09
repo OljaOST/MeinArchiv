@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dokument löschen – MeinArchiv</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='dokumentansicht.css') }}">
+</head>
+<body>
+    <a href="{{ url_for('dokument_detail', dokument_id=dokument.id) }}">Zurück zum Dokument</a>
+    <main>
+        <h1>Dokument löschen?</h1>
+        <p class="detail-dateiname">{{ dokument.dateiname }}</p>
+        <p>Die Datei und ihre Angaben werden dauerhaft aus MeinArchiv entfernt. Die Kategorie und andere Dokumente bleiben erhalten.</p>
+        <form action="{{ url_for('dokument_loeschen', dokument_id=dokument.id) }}" method="post">
+            <input type="hidden" name="bestaetigung" value="{{ bestaetigung }}">
+            <label class="detail-bestaetigung">
+                <input type="checkbox" name="loeschen" value="ja" required>
+                <span>Ich möchte dieses Dokument dauerhaft löschen.</span>
+            </label>
+            <div class="detail-loeschaktionen">
+                <button type="submit" class="button-gefahr">Endgültig löschen</button>
+                <a href="{{ url_for('dokument_detail', dokument_id=dokument.id) }}">Abbrechen</a>
+            </div>
+        </form>
+    </main>
+</body>
+</html>

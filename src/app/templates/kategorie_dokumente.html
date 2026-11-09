@@ -35,6 +35,7 @@
                     {% if dokument.ablagedatum %}<span>Ablage: {{ dokument.ablagedatum.strftime('%d.%m.%Y') }}</span>{% endif %}
                 </div>
                 <div class="dokument-aktionen">
+                        <a href="{{ url_for('dokument_detail', dokument_id=dokument.id) }}">Öffnen</a>
                     <a href="{{ url_for('dokument_download', dokument_id=dokument.id) }}">Herunterladen</a>
                     <a href="{{ url_for('dokument_kategorie', dokument_id=dokument.id) }}">Kategorie ändern</a>
                 </div>

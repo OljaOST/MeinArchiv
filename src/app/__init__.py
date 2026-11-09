@@ -16,6 +16,13 @@ from .ki import erkenne_dokument
 
 from .startseite import startseite_anzeigen, kategorie_dokumente_anzeigen
 
+from .dokumentansicht import (
+    dokument_anzeigen,
+    dokument_loeschen_bestaetigen,
+    dokument_vorschau_anzeigen,
+)
+
+
 import os
 from pathlib import Path
 
@@ -724,3 +731,17 @@ def einfuegen():
 @app.route("/kategorien/<int:kategorie_id>/dokumente")
 def kategorie_dokumente(kategorie_id):
     return kategorie_dokumente_anzeigen(kategorie_id)
+
+@app.route("/dokumente/<int:dokument_id>")
+def dokument_detail(dokument_id):
+    return dokument_anzeigen(dokument_id)
+
+
+@app.route("/dokumente/<int:dokument_id>/vorschau")
+def dokument_vorschau(dokument_id):
+    return dokument_vorschau_anzeigen(dokument_id)
+
+
+@app.route("/dokumente/<int:dokument_id>/loeschen", methods=["GET", "POST"])
+def dokument_loeschen(dokument_id):
+    return dokument_loeschen_bestaetigen(dokument_id)
