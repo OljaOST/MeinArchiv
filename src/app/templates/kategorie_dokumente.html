@@ -6,9 +6,10 @@
     <title>{{ kategorie.name if kategorie else 'Kategorie' }} – MeinArchiv</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='startseite.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ordner.css') }}">
 </head>
 <body>
-    <a href="{{ url_for('index') }}">Zurück zur Startseite</a>
+    <a href="{{ url_for('dokumente') }}">Zurück zu meinen Dokumenten</a>
     <main>
         {% if ladefehler %}
         <section class="start-ladefehler" role="alert">
@@ -17,27 +18,26 @@
         </section>
         {% else %}
         <h1 class="start-kategorie-titel">{{ kategorie.name }}</h1>
-        <form action="{{ url_for('kategorie_dokumente', kategorie_id=kategorie.id) }}" method="get" role="search">
-            <label for="kategorie-suche">Nach Dateiname in dieser Kategorie suchen</label>
-            <input type="search" id="kategorie-suche" name="q" value="{{ suche }}" placeholder="Zum Beispiel Firmenname">
-            <div class="start-filteraktionen">
-                <button type="submit">Suchen</button>
-                <a href="{{ url_for('kategorie_dokumente', kategorie_id=kategorie.id) }}">Suche zurücksetzen</a>
-            </div>
-        </form>
+        {% if suche %}<p><a href="{{ ordner_url }}">Alle Dateien im Ordner anzeigen</a></p>{% endif %}
+        {% if umbenannt and umbenannt in dokumente|map(attribute='id')|list %}
+        <p class="ordner-hinweis" role="status">Dokument umbenannt.</p>
+        {% endif %}
+        {% if verschoben and verschoben in dokumente|map(attribute='id')|list %}
+        <p class="ordner-hinweis" role="status">Dokument verschoben.</p>
+        {% endif %}
         {% if dokumente %}
         <p>{{ dokumente|length }} {{ 'Dokument' if dokumente|length == 1 else 'Dokumente' }}{% if suche %} für „{{ suche }}“{% endif %}</p>
         <ul class="dokumentliste">
             {% for dokument in dokumente %}
             <li class="dokumenteintrag">
                 <div class="dokument-info">
-                    <strong>{{ dokument.dateiname }}</strong>
+                    <a class="ordner-dateilink" href="{{ url_for('dokument_detail', dokument_id=dokument.id) }}">{{ dokument.dateiname }}</a>
                     {% if dokument.ablagedatum %}<span>Ablage: {{ dokument.ablagedatum.strftime('%d.%m.%Y') }}</span>{% endif %}
                 </div>
                 <div class="dokument-aktionen">
-                        <a href="{{ url_for('dokument_detail', dokument_id=dokument.id) }}">Öffnen</a>
-                    <a href="{{ url_for('dokument_download', dokument_id=dokument.id) }}">Herunterladen</a>
-                    <a href="{{ url_for('dokument_kategorie', dokument_id=dokument.id) }}">Angaben bearbeiten</a>
+                    <a href="{{ url_for('dokument_umbenennen', dokument_id=dokument.id) }}">Umbenennen</a>
+                    <a href="{{ url_for('dokument_verschieben', dokument_id=dokument.id) }}">Verschieben</a>
+                    <a class="ordner-loeschen" href="{{ url_for('dokument_loeschen', dokument_id=dokument.id, aus_ordner=1) }}">Löschen</a>
                 </div>
             </li>
             {% endfor %}
@@ -45,10 +45,9 @@
         {% elif suche %}
         <p class="start-leer">Keine Dokumente für „{{ suche }}“ in dieser Kategorie gefunden.</p>
         {% else %}
-        <p class="start-leer">In dieser Kategorie sind noch keine Dokumente abgelegt.</p>
+        <p class="start-leer">In diesem Ordner sind noch keine Dokumente abgelegt.</p>
         {% endif %}
         {% endif %}
-        <p><a href="{{ url_for('dokumente') }}">Alle Dokumente anzeigen</a></p>
     </main>
 </body>
 </html>

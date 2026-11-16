@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dokument verschieben – MeinArchiv</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ordner.css') }}">
+</head>
+<body>
+    <a href="{{ zurueck }}">Zurück zum Ordner</a>
+    <main>
+        <h1>Dokument verschieben</h1>
+        <p class="ordner-dateiname">{{ dokument.dateiname }}</p>
+        <form method="post">
+            <input type="hidden" name="bestaetigung" value="{{ bestaetigung }}">
+            {% if fehler %}<p role="alert">{{ fehler }}</p>{% endif %}
+            <label for="ziel">Zielordner</label>
+            <select name="ziel" id="ziel">
+                {% for ordner in kategorien %}
+                <option value="{{ ordner.id }}" {% if ziel == ordner.id|string %}selected{% endif %}>{{ ordner.name }}</option>
+                {% endfor %}
+                <option value="" {% if ziel == '' %}selected{% endif %}>Ohne Kategorie</option>
+            </select>
+            <button type="submit">Hierhin verschieben</button>
+        </form>
+    </main>
+</body>
+</html>

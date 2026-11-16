@@ -1,4 +1,5 @@
 import os
+import re
 from datetime import datetime
 from io import BytesIO
 from unittest.mock import MagicMock
@@ -7,9 +8,8 @@ from zoneinfo import ZoneInfo
 import pytest
 
 from app import app
-from app.datenbank import Dokument, Kategorie, db
 from app.dateinamen import erstelle_dateinamen
-
+from app.datenbank import Dokument, Kategorie, db
 
 pytestmark = pytest.mark.skipif(
     not os.getenv("DATABASE_URL"),
@@ -45,9 +45,7 @@ def testumgebung(monkeypatch):
             db.drop_all()
 
 
-def test_upload_analyse_bestaetigung_und_download(
-    testumgebung, monkeypatch
-):
+def test_upload_analyse_bestaetigung_und_download(testumgebung, monkeypatch):
     client, kategorie_id = testumgebung
     dateiinhalt = b"Testinhalt einer Rechnung"
 
@@ -129,11 +127,62 @@ def test_upload_analyse_bestaetigung_und_download(
         assert dokument.dateiname == erwarteter_name
 
     # 5. Dokument unter dem erzeugten Namen herunterladen.
-    antwort = client.get(
-        f"/dokumente/{dokument_id}/download"
-    )
+    antwort = client.get(f"/dokumente/{dokument_id}/download")
 
     assert antwort.status_code == 200
     assert antwort.data == dateiinhalt
     assert erwarteter_name in antwort.headers["Content-Disposition"]
     antwort.close()
+
+
+@pytest.mark.parametrize("erkennung_erfolgreich", [True, False])
+def test_import_mit_dateinamenvorschlag_und_speichern(
+    testumgebung, monkeypatch, erkennung_erfolgreich
+):
+    client, kategorie_id = testumgebung
+    erkennung = MagicMock(
+        return_value={"kategorie": "Rechnung", "firma": "Muster GmbH"},
+        side_effect=None if erkennung_erfolgreich else ValueError("Kein Ergebnis"),
+    )
+    monkeypatch.setattr("app.dokumentimport.erkenne_dokument", erkennung)
+    inhalt = b"Testdatei"
+    antwort = client.post(
+        "/dokumente/vorbereiten",
+        data={
+            "dokument": (BytesIO(inhalt), "Original.pdf"),
+            "namensvorschlag": "ja",
+        },
+    )
+    assert antwort.status_code == 303
+    vorschau_url = antwort.headers["Location"]
+    assert vorschau_url.startswith("/entwuerfe/")
+    dokument_id = int(vorschau_url.split("/")[2])
+    html = client.get(vorschau_url).get_data(as_text=True)
+    assert "In meine Dokumente speichern" in html
+    assert 'name="freigabe"' not in html
+    assert 'name="firma"' not in html
+    assert 'name="kategorie_id"' not in html
+    assert (
+        "_Rechnung_Muster GmbH" if erkennung_erfolgreich else 'value="Original"'
+    ) in html
+    erkennung.assert_called_once_with(inhalt, ".pdf", ["Rechnung"])
+
+    antwort = client.get(f"/entwuerfe/{dokument_id}/vorschau")
+    assert antwort.data == inhalt
+    antwort.close()
+    token = re.search(r'name="bestaetigung" value="([^"]+)"', html).group(1)
+    daten = {"dateiname": "Mein korrigierter Name.pdf", "bestaetigung": token}
+    antwort = client.post(vorschau_url, data=daten, follow_redirects=True)
+    assert "Dokument erfolgreich gespeichert" in antwort.get_data(as_text=True)
+    assert client.post(vorschau_url, data=daten).status_code == 303
+    assert client.get(f"/entwuerfe/{dokument_id}/vorschau").status_code == 404
+
+    with app.app_context():
+        dokument = db.session.get(Dokument, dokument_id)
+        assert dokument.ist_entwurf is False
+        assert dokument.dateiname == "Mein korrigierter Name.pdf"
+        assert dokument.inhalt == inhalt
+        assert dokument.kategorie_id == (
+            kategorie_id if erkennung_erfolgreich else None
+        )
+        assert dokument.firma == ("Muster GmbH" if erkennung_erfolgreich else None)

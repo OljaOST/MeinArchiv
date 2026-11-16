@@ -18,6 +18,9 @@
         <a class="start-einstellungen" href="{{ url_for('einstellungen') }}" aria-label="Einstellungen" title="Einstellungen"><span aria-hidden="true">⚙</span></a>
     </header>
     <main>
+        {% if gespeichert and gespeichert in dokumente|map(attribute='id')|list %}
+        <p class="start-gespeichert" role="status">Dokument erfolgreich gespeichert</p>
+        {% endif %}
         <div class="start-abschnittskopf">
             <h2>Meine Dokumente</h2>
             {% if anzahl is not none %}

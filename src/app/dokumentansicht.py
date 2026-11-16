@@ -10,6 +10,7 @@ from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 from sqlalchemy.exc import SQLAlchemyError
 
 from .datenbank import Dokument, Kategorie, db
+from .dokumentordner import ordner_url
 
 # Lokal funktioniert die Bestätigung ohne zusätzliche Einrichtung. Für mehrere
 # Serverprozesse muss FORMULAR_SCHLUESSEL als gemeinsames Geheimnis gesetzt werden.
@@ -30,6 +31,7 @@ def _lade_metadaten(dokument_id):
         db.select(
             Dokument.id,
             Dokument.dateiname,
+            Dokument.kategorie_id,
             Dokument.firma,
             Dokument.ablagedatum,
             Kategorie.name.label("kategoriename"),
@@ -74,12 +76,12 @@ def dokument_anzeigen(dokument_id):
     )
 
 
-def dokument_vorschau_anzeigen(dokument_id):
+def dokument_vorschau_anzeigen(dokument_id, *, ist_entwurf=False):
     try:
         dokument = db.session.execute(
             db.select(Dokument.dateiname, Dokument.inhalt).where(
                 Dokument.id == dokument_id,
-                Dokument.ist_entwurf.is_(False),
+                Dokument.ist_entwurf.is_(ist_entwurf),
             )
         ).one_or_none()
     except SQLAlchemyError:
@@ -114,6 +116,7 @@ def dokument_vorschau_anzeigen(dokument_id):
 
 
 def dokument_loeschen_bestaetigen(dokument_id):
+    aus_ordner = request.args.get("aus_ordner") == "1"
     if request.method == "POST":
         try:
             bestaetigung = _loesch_bestaetigung.loads(
@@ -144,19 +147,24 @@ def dokument_loeschen_bestaetigen(dokument_id):
             )
 
         try:
-            ergebnis = db.session.execute(
-                db.delete(Dokument).where(
+            geloescht = db.session.execute(
+                db.delete(Dokument)
+                .where(
                     Dokument.id == dokument_id,
                     Dokument.ist_entwurf.is_(False),
                 )
-            )
-            if ergebnis.rowcount != 1:
+                .returning(Dokument.kategorie_id)
+            ).one_or_none()
+            if geloescht is None:
                 db.session.rollback()
                 abort(404)
             db.session.commit()
         except SQLAlchemyError:
             return _datenbankfehler()
-        return redirect(url_for("dokumente"), code=303)
+        ziel = (
+            ordner_url(geloescht.kategorie_id) if aus_ordner else url_for("dokumente")
+        )
+        return redirect(ziel, code=303)
 
     try:
         dokument = _lade_metadaten(dokument_id)
@@ -168,5 +176,11 @@ def dokument_loeschen_bestaetigen(dokument_id):
     return render_template(
         "dokument_loeschen.html",
         dokument=dokument,
+        zurueck=(
+            ordner_url(dokument.kategorie_id)
+            if aus_ordner
+            else url_for("dokument_detail", dokument_id=dokument_id)
+        ),
+        aus_ordner=aus_ordner,
         bestaetigung=_loesch_bestaetigung.dumps({"dokument_id": dokument_id}),
     )

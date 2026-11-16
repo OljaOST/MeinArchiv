@@ -5,26 +5,31 @@ from sqlalchemy import and_
 from sqlalchemy.exc import SQLAlchemyError
 
 from .datenbank import Dokument, Kategorie, db
+from .dokumentordner import ordner_url
+
+
+def kategorien_mit_anzahl():
+    return db.session.execute(
+        db.select(
+            Kategorie.id,
+            Kategorie.name,
+            db.func.count(Dokument.id).label("anzahl"),
+        )
+        .outerjoin(
+            Dokument,
+            and_(
+                Dokument.kategorie_id == Kategorie.id,
+                Dokument.ist_entwurf.is_(False),
+            ),
+        )
+        .group_by(Kategorie.id, Kategorie.name)
+        .order_by(db.func.lower(Kategorie.name), Kategorie.id)
+    ).all()
 
 
 def startseite_anzeigen():
     try:
-        kategorien = db.session.execute(
-            db.select(
-                Kategorie.id,
-                Kategorie.name,
-                db.func.count(Dokument.id).label("anzahl"),
-            )
-            .outerjoin(
-                Dokument,
-                and_(
-                    Dokument.kategorie_id == Kategorie.id,
-                    Dokument.ist_entwurf.is_(False),
-                ),
-            )
-            .group_by(Kategorie.id, Kategorie.name)
-            .order_by(db.func.lower(Kategorie.name), Kategorie.id)
-        ).all()
+        kategorien = kategorien_mit_anzahl()
 
         dokumente = db.session.execute(
             db.select(
@@ -64,6 +69,7 @@ def startseite_anzeigen():
         dokumente=dokumente,
         anzahl=anzahl,
         ladefehler=False,
+        gespeichert=request.args.get("gespeichert", type=int),
     )
 
 
@@ -71,9 +77,12 @@ def kategorie_dokumente_anzeigen(kategorie_id):
     suche = request.args.get("q", "").strip()
 
     try:
-        kategorie = db.session.get(Kategorie, kategorie_id)
-        if kategorie is None:
-            abort(404)
+        if kategorie_id is None:
+            kategorie = {"name": "Ohne Kategorie"}
+        else:
+            kategorie = db.session.get(Kategorie, kategorie_id)
+            if kategorie is None:
+                abort(404)
 
         abfrage = (
             db.select(
@@ -111,6 +120,9 @@ def kategorie_dokumente_anzeigen(kategorie_id):
     return render_template(
         "kategorie_dokumente.html",
         kategorie=kategorie,
+        ordner_url=ordner_url(kategorie_id),
+        verschoben=request.args.get("verschoben", type=int),
+        umbenannt=request.args.get("umbenannt", type=int),
         dokumente=dokumente,
         suche=suche,
         ladefehler=False,

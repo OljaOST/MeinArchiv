@@ -163,10 +163,11 @@ formular.addEventListener("submit", async (ereignis) => {
     if (!aktuelleDatei || beschaeftigt) return;
     beschaeftigt = true;
     loescheFehler();
-    statusText.textContent = "Dokument wird hochgeladen …";
+    statusText.textContent = "Dateinamenvorschlag wird erstellt …";
     aktualisiereBedienung();
     try {
         const daten = new FormData();
+        daten.append("namensvorschlag", "ja");
         daten.append("dokument", aktuelleDatei, aktuelleDatei.name);
         const antwort = await fetch(formular.action, {method: "POST", body: daten});
         if (!antwort.ok) {

@@ -214,7 +214,7 @@ formular.addEventListener("submit", async (ereignis) => {
     if (!original || beschaeftigt || !zuschnitt.hidden) return;
     beschaeftigt = true;
     loescheFehler();
-    statusText.textContent = "Bearbeitetes Foto wird hochgeladen …";
+    statusText.textContent = "Dateinamenvorschlag wird erstellt …";
     aktualisiereBedienung();
     try {
         const datei = await new Promise((resolve) => bild.toBlob(resolve, "image/jpeg", 0.92));
@@ -222,6 +222,7 @@ formular.addEventListener("submit", async (ereignis) => {
             throw new Error("Das bearbeitete Bild konnte nicht gespeichert werden. Bitte verwende ein kleineres Foto.");
         }
         const daten = new FormData();
+        daten.append("namensvorschlag", "ja");
         daten.append("dokument", datei, `${originalname}.jpg`);
         const antwort = await fetch(formular.action, {method: "POST", body: daten});
         if (!antwort.ok) {

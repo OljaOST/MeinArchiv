@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dokumentvorschau – MeinArchiv</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='import.css') }}">
+</head>
+<body>
+    <a href="{{ url_for('dokumente') }}">Zurück zu meinen Dokumenten</a>
+    <main class="import-ansicht">
+        <h1>Dokumentvorschau</h1>
+        <div class="import-vorschau">
+            {% if endung|lower in ('.jpg', '.jpeg', '.png') %}
+                <img src="{{ url_for('entwurf_vorschau', dokument_id=dokument.id) }}" alt="Vorschau des Dokuments">
+            {% elif endung|lower == '.pdf' %}
+                <iframe src="{{ url_for('entwurf_vorschau', dokument_id=dokument.id) }}" title="PDF-Vorschau"></iframe>
+                <a href="{{ url_for('entwurf_vorschau', dokument_id=dokument.id) }}" target="_blank" rel="noopener">PDF separat öffnen</a>
+            {% else %}
+                <p>{{ dokument.dateiname }}</p>
+            {% endif %}
+        </div>
+        <form method="post" class="import-formular">
+            <input type="hidden" name="bestaetigung" value="{{ bestaetigung }}">
+            {% if fehler %}<p role="alert">{{ fehler }}</p>{% endif %}
+            <label for="dateiname">Dokumentname</label>
+            <div class="import-dateiname">
+                <input type="text" id="dateiname" name="dateiname" value="{{ stamm }}" required maxlength="{{ 255 - endung|length }}">
+                <span>{{ endung }}</span>
+            </div>
+            {% if not dokument.ablagedatum %}
+            <p>Der bisherige Dateiname ist vorausgefüllt. Du kannst ihn hier ändern.</p>
+            {% endif %}
+            <button type="submit">In meine Dokumente speichern</button>
+        </form>
+        <a href="{{ url_for('entwurf_verwerfen', dokument_id=dokument.id) }}">Entwurf verwerfen</a>
+    </main>
+</body>
+</html>

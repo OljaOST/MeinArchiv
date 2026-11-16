@@ -1,0 +1,125 @@
+.ordnerliste {
+    display: grid;
+    gap: 8px;
+    padding: 0;
+    margin: 16px 0;
+    list-style: none;
+}
+
+.ordnerzeile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border: 1px solid #d9e3f2;
+    border-radius: 12px;
+    background: #fff;
+    color: #172033;
+    text-decoration: none;
+}
+
+.ordnerzeile:hover { background: #edf4ff; }
+
+.ordnerzeile:focus-visible {
+    outline: 3px solid #0967df;
+    outline-offset: 2px;
+}
+
+.ordnerangaben {
+    flex: 1;
+    display: grid;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.ordnerangaben > span {
+    color: #526078;
+    font-size: 14px;
+}
+
+.ordnersymbol {
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+    border-radius: 10px;
+    background: #e3eeff;
+    color: #0967df;
+}
+
+.ordnersymbol > span {
+    position: relative;
+    width: 24px;
+    height: 16px;
+    margin-top: 4px;
+    border: 2px solid currentColor;
+    border-radius: 3px;
+}
+
+.ordnersymbol > span::before {
+    position: absolute;
+    top: -6px;
+    left: -2px;
+    width: 10px;
+    height: 5px;
+    border: 2px solid currentColor;
+    border-bottom: 0;
+    border-radius: 3px 3px 0 0;
+    background: inherit;
+    content: "";
+}
+
+.ordnerliste li:nth-child(4n + 2) .ordnersymbol { background: #eee6ff; color: #6440c8; }
+.ordnerliste li:nth-child(4n + 3) .ordnersymbol { background: #def5e8; color: #14743d; }
+.ordnerliste li:nth-child(4n + 4) .ordnersymbol { background: #fff0df; color: #a75c08; }
+
+.ordnerpfeil {
+    font-size: 25px;
+    line-height: 1;
+}
+
+.ordner-hinweis {
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: #e5efff;
+    color: #203758;
+}
+
+.ordner-dateiname { overflow-wrap: anywhere; }
+.ordner-suche {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 16px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+}
+
+.ordner-suche label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+.ordner-suche input[type="search"] {
+    flex: 1;
+    min-width: 0;
+    width: auto;
+}
+
+.ordner-suche button { margin: 0; }
+.ordner-suche > a { flex-basis: 100%; }
+
+.ordner-dateilink {
+    font-weight: 700;
+    color: #172033;
+    overflow-wrap: anywhere;
+}
+
+.dokument-aktionen .ordner-loeschen { color: #a22120; }

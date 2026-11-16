@@ -6,24 +6,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Meine Dokumente – MeinArchiv</title>
     <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ordner.css') }}">
 </head>
 
 <body>
     <a href="/">Zurück zur Startseite</a>
 
+    <main>
     <h1>Meine Dokumente</h1>
 
-    <form action="{{ url_for('dokumente') }}" method="get">
+    <form class="ordner-suche" action="{{ url_for('dokumente') }}" method="get" role="search">
         <label for="suche">Nach Dateiname suchen</label>
 
-        <input type="search" id="suche" name="q" value="{{ suche }}" placeholder="Zum Beispiel Rechnung">
+        <input type="search" id="suche" name="q" value="{{ suche }}" placeholder="Dokumente durchsuchen …">
 
         <button type="submit">Suchen</button>
 
-        <a href="{{ url_for('dokumente') }}">Alle Dokumente anzeigen</a>
+        {% if suche %}<a href="{{ url_for('dokumente') }}">Zur Ordnerübersicht</a>{% endif %}
     </form>
 
-    {% if dokumente %}
+    {% if not suche %}
+    <ul class="ordnerliste" aria-label="Dokumentordner">
+        {% for ordner in kategorien + [{'id': none, 'name': 'Ohne Kategorie', 'anzahl': ohne_kategorie}] %}
+        <li>
+            <a class="ordnerzeile" href="{{ url_for('dokumente_ohne_kategorie') if ordner.id is none else url_for('kategorie_dokumente', kategorie_id=ordner.id) }}">
+                <span class="ordnersymbol" aria-hidden="true"><span></span></span>
+                <span class="ordnerangaben">
+                    <strong>{{ ordner.name }}</strong>
+                    <span>{{ ordner.anzahl }} {{ 'Dokument' if ordner.anzahl == 1 else 'Dokumente' }}</span>
+                </span>
+                <span class="ordnerpfeil" aria-hidden="true">›</span>
+            </a>
+        </li>
+        {% endfor %}
+    </ul>
+    <p class="ordner-hinweis">Öffne einen Ordner und wähle beim gewünschten Dokument «Verschieben».</p>
+    {% elif dokumente %}
     <ul class="dokumentliste">
         {% for dokument in dokumente %}
         <li class="dokumenteintrag">
@@ -36,6 +54,7 @@
 
             <div class="dokument-aktionen">
                         <a href="{{ url_for('dokument_detail', dokument_id=dokument.id) }}">Öffnen</a>
+                <a href="{{ url_for('dokument_verschieben', dokument_id=dokument.id) }}">Verschieben</a>
                 <a href="{{ url_for('dokument_download',
                                         dokument_id=dokument.id) }}">
                     Herunterladen
@@ -55,17 +74,13 @@
         {% endfor %}
     </ul>
     {% else %}
-    {% if suche %}
-    <p>Keine Dokumente für „{{ suche }}“ gefunden.</p>
-    {% else %}
-    <p>Es sind noch keine Dokumente vorhanden.</p>
-    {% endif %}
+    <p>Keine Dokumente für «{{ suche }}» gefunden.</p>
     {% endif %}
 
+    {% if entwuerfe %}
     <section aria-labelledby="entwuerfe-ueberschrift">
         <h2 id="entwuerfe-ueberschrift">Offene Uploads</h2>
 
-        {% if entwuerfe %}
         <p>Diese Dateien warten auf die endgültige Übernahme ins Archiv.</p>
 
         <ul class="dokumentliste">
@@ -77,7 +92,7 @@
                 </div>
 
                 <div class="dokument-aktionen">
-                    <a href="{{ url_for('dokument_analysieren',
+                    <a href="{{ url_for('entwurf_speichern',
                                             dokument_id=entwurf.id) }}">
                         Fortsetzen
                     </a>
@@ -89,15 +104,15 @@
             </li>
             {% endfor %}
         </ul>
-        {% else %}
-        <p>Es gibt keine offenen Uploads.</p>
-        {% endif %}
+
     </section>
+    {% endif %}
 
     <h2 id="dokument-hinzufuegen">Dokument hinzufügen</h2>
 
     <form action="{{ url_for('dokument_vorbereiten') }}" method="post" enctype="multipart/form-data">
 
+        <input type="hidden" name="namensvorschlag" value="ja">
         <p>
             <label for="dokument">Datei auswählen</label>
 
@@ -105,16 +120,16 @@
         </p>
 
         <p>
-            Im nächsten Schritt kannst du die Übermittlung an OpenAI
-            freigeben und Kategorie sowie Firma erkennen lassen.
+            Mit «Dokument übernehmen» wird die Datei zur Ermittlung des Dateinamens an OpenAI gesendet.
         </p>
 
-        <button type="submit">Weiter zur KI-Erkennung</button>
+        <button type="submit">Dokument übernehmen</button>
     </form>
 
     <p>
         <a href="{{ url_for('kategorien') }}">Kategorien verwalten</a>
     </p>
+    </main>
 </body>
 
 </html>

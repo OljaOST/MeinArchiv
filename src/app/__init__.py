@@ -1,3 +1,8 @@
+from .dokumentimport import (
+    import_speichern,
+    import_vorschau,
+    namensvorschlag_vorbereiten,
+)
 from .dokumentbearbeitung import dokument_angaben_bearbeiten
 from flask_migrate import Migrate
 
@@ -15,7 +20,15 @@ from openai import APIError, OpenAI
 
 from .ki import erkenne_dokument
 
-from .startseite import startseite_anzeigen, kategorie_dokumente_anzeigen
+from .startseite import (
+    kategorien_mit_anzahl,
+    kategorie_dokumente_anzeigen,
+    startseite_anzeigen,
+)
+from .dokumentordner import (
+    dokument_umbenennen_anzeigen,
+    dokument_verschieben_anzeigen,
+)
 
 from .dokumentansicht import (
     dokument_anzeigen,
@@ -103,19 +116,23 @@ def dokumente():
             .order_by(Dokument.id.desc())
         )
 
+        gespeicherte_dokumente = []
+        gespeicherte_kategorien = []
+        ohne_kategorie = 0
         if suche:
-            dokument_abfrage = dokument_abfrage.where(
-                Dokument.dateiname.icontains(suche, autoescape=True)
+            gespeicherte_dokumente = db.session.execute(
+                dokument_abfrage.where(
+                    Dokument.dateiname.icontains(suche, autoescape=True)
+                )
+            ).all()
+        else:
+            gespeicherte_kategorien = kategorien_mit_anzahl()
+            ohne_kategorie = db.session.scalar(
+                db.select(db.func.count(Dokument.id)).where(
+                    Dokument.ist_entwurf.is_(False),
+                    Dokument.kategorie_id.is_(None),
+                )
             )
-
-        gespeicherte_dokumente = db.session.execute(dokument_abfrage).all()
-
-        kategorie_abfrage = db.select(
-            Kategorie.id,
-            Kategorie.name,
-        ).order_by(Kategorie.name)
-
-        gespeicherte_kategorien = db.session.execute(kategorie_abfrage).all()
 
         entwurf_abfrage = (
             db.select(
@@ -135,6 +152,7 @@ def dokumente():
         "dokumente.html",
         dokumente=gespeicherte_dokumente,
         kategorien=gespeicherte_kategorien,
+        ohne_kategorie=ohne_kategorie,
         entwuerfe=offene_entwuerfe,
         suche=suche,
     )
@@ -608,6 +626,10 @@ def dokument_vorbereiten():
             fehler="Der Upload konnte nicht vorbereitet werden."
         ), 503
 
+    if request.form.get("namensvorschlag") == "ja":
+        namensvorschlag_vorbereiten(entwurf_id, inhalt, Path(originalname).suffix.lower())
+        return redirect(url_for("entwurf_speichern", dokument_id=entwurf_id), code=303)
+
     return redirect(
         url_for("dokument_analysieren", dokument_id=entwurf_id),
         code=303,
@@ -689,3 +711,31 @@ def einstellungen():
 @app.route("/export/dokumente")
 def dokument_export():
     return dokumente_exportieren()
+
+
+
+@app.route("/entwuerfe/<int:dokument_id>/speichern", methods=["GET", "POST"])
+def entwurf_speichern(dokument_id):
+    return import_speichern(dokument_id)
+
+
+@app.route("/entwuerfe/<int:dokument_id>/vorschau")
+def entwurf_vorschau(dokument_id):
+    return import_vorschau(dokument_id)
+
+
+
+@app.route("/dokumente/ohne-kategorie")
+def dokumente_ohne_kategorie():
+    return kategorie_dokumente_anzeigen(None)
+
+
+@app.route("/dokumente/<int:dokument_id>/verschieben", methods=["GET", "POST"])
+def dokument_verschieben(dokument_id):
+    return dokument_verschieben_anzeigen(dokument_id)
+
+
+
+@app.route("/dokumente/<int:dokument_id>/umbenennen", methods=["GET", "POST"])
+def dokument_umbenennen(dokument_id):
+    return dokument_umbenennen_anzeigen(dokument_id)

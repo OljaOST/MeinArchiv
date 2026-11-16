@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dokument umbenennen – MeinArchiv</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='import.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ordner.css') }}">
+</head>
+<body>
+    <a href="{{ zurueck }}">Zurück zum Ordner</a>
+    <main class="import-ansicht">
+        <h1>Dokument umbenennen</h1>
+        <p class="ordner-dateiname">{{ dokument.dateiname }}</p>
+        <form method="post" class="import-formular">
+            <input type="hidden" name="bestaetigung" value="{{ bestaetigung }}">
+            {% if fehler %}<p role="alert">{{ fehler }}</p>{% endif %}
+            <label for="dateiname">Neuer Dateiname</label>
+            <input type="text" id="dateiname" name="dateiname" value="{{ name }}" required maxlength="255">
+            <button type="submit">Namen speichern</button>
+        </form>
+    </main>
+</body>
+</html>
