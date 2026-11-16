@@ -32,6 +32,9 @@ pyvenv.cfg
 Include/
 Lib/
 Scripts/
+!/scripts/
+/scripts/*
+!/scripts/angaben_einbinden.py
 ## in case of environment in subdirectories
 .env
 .venv
