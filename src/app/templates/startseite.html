@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+{% from 'symbole.html' import symbol, farbiger_ordner %}
 <html lang="de">
 <head>
     <meta charset="utf-8">
@@ -18,9 +19,6 @@
         <a class="start-einstellungen" href="{{ url_for('einstellungen') }}" aria-label="Einstellungen" title="Einstellungen"><span aria-hidden="true">⚙</span></a>
     </header>
     <main>
-        {% if gespeichert and gespeichert in dokumente|map(attribute='id')|list %}
-        <p class="start-gespeichert" role="status">Dokument erfolgreich gespeichert</p>
-        {% endif %}
         <div class="start-abschnittskopf">
             <h2>Meine Dokumente</h2>
             {% if anzahl is not none %}
@@ -38,22 +36,22 @@
 
         <nav class="aktionen" aria-label="Dokumentaktionen">
             <a class="aktion-scannen" href="{{ url_for('scannen') }}">
-                <span class="aktionssymbol" aria-hidden="true">▣</span>
+                {{ symbol('scan', 'aktionssymbol') }}
                 <span class="aktionstitel">Scannen</span>
                 <span class="aktionsbeschreibung">Mit der Kamera erfassen</span>
             </a>
             <a class="aktion-hochladen" href="{{ url_for('hochladen') }}">
-                <span class="aktionssymbol" aria-hidden="true">↑</span>
+                {{ symbol('upload', 'aktionssymbol') }}
                 <span class="aktionstitel">Hochladen</span>
                 <span class="aktionsbeschreibung">Dokument auswählen</span>
             </a>
             <a class="aktion-einfuegen" href="{{ url_for('einfuegen') }}">
-                <span class="aktionssymbol" aria-hidden="true">▤</span>
+                {{ symbol('clipboard', 'aktionssymbol') }}
                 <span class="aktionstitel">Einfügen</span>
                 <span class="aktionsbeschreibung">Dokument aus der Zwischenablage</span>
             </a>
             <a class="aktion-dokumente" href="{{ url_for('dokumente') }}">
-                <span class="aktionssymbol" aria-hidden="true">▱</span>
+                {{ symbol('ordner', 'aktionssymbol ordner-gruen') }}
                 <span class="aktionstitel">Meine Dokumente</span>
                 <span class="aktionsbeschreibung">Gespeicherte Unterlagen verwalten</span>
             </a>
@@ -75,8 +73,8 @@
             <ul class="start-kategorien">
                 {% for kategorie in kategorien %}
                 <li>
-                    <a class="start-kategorie start-farbe-{{ loop.index0 % 6 }}" href="{{ url_for('kategorie_dokumente', kategorie_id=kategorie.id) }}">
-                        <span class="start-kategorie-symbol" aria-hidden="true">▱</span>
+                    <a class="start-kategorie" href="{{ url_for('kategorie_dokumente', kategorie_id=kategorie.id) }}">
+                        {{ farbiger_ordner(kategorie) }}
                         <strong>{{ kategorie.name }}</strong>
                         <span class="start-kategorie-anzahl">{{ kategorie.anzahl }} {{ 'Dokument' if kategorie.anzahl == 1 else 'Dokumente' }}</span>
                     </a>
@@ -97,6 +95,7 @@
             <ul class="dokumentliste start-dokumentliste">
                 {% for dokument in dokumente %}
                 <li class="dokumenteintrag">
+                    {{ farbiger_ordner({'id': dokument.kategorie_id, 'name': dokument.kategoriename}) }}
                     <div class="dokument-info">
                         <strong>{{ dokument.dateiname }}</strong>
                         <span>{{ dokument.kategoriename or 'Ohne Kategorie' }}{% if dokument.ablagedatum %} · <time datetime="{{ dokument.ablagedatum.isoformat() }}">{{ dokument.ablagedatum.strftime('%d.%m.%Y') }}</time>{% endif %}</span>
@@ -112,6 +111,13 @@
             <p class="start-leer">Noch keine Dokumente abgelegt. Starte mit Scannen, Hochladen oder Einfügen.</p>
             {% endif %}
         </section>
+        {% endif %}
+        {% if gespeichert %}
+        <div class="start-gespeichert">
+            {{ symbol('erfolg', 'start-erfolg-symbol') }}
+            <span role="status">Dokument erfolgreich gespeichert</span>
+            <a href="{{ url_for('index') }}" aria-label="Erfolgsmeldung schliessen">×</a>
+        </div>
         {% endif %}
     </main>
 </body>
