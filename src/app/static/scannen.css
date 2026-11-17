@@ -26,7 +26,8 @@
     position: absolute;
     border: 3px solid #0967df;
     box-shadow: 0 0 0 2000px rgb(0 0 0 / 45%);
-    pointer-events: none;
+    touch-action: none;
+    cursor: move;
 }
 
 .scan-werkzeuge {
@@ -68,13 +69,34 @@
     font-weight: bold;
 }
 
-#scan-zuschnitt input[type="range"] {
-    display: block;
-    width: 100%;
-    margin: 0 0 20px;
-    min-height: 32px;
-    accent-color: #0967df;
+#scan-formular .scan-griff {
+    position: absolute;
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    touch-action: none;
 }
+
+.scan-griff::after {
+    content: "";
+    width: 14px;
+    height: 14px;
+    border: 2px solid #0967df;
+    border-radius: 50%;
+    background: white;
+    pointer-events: none;
+}
+
+.scan-griff[data-ecke="ol"] { top: 0; left: 0; cursor: nwse-resize; }
+.scan-griff[data-ecke="or"] { top: 0; right: 0; cursor: nesw-resize; }
+.scan-griff[data-ecke="ul"] { bottom: 0; left: 0; cursor: nesw-resize; }
+.scan-griff[data-ecke="ur"] { bottom: 0; right: 0; cursor: nwse-resize; }
 
 .scan-hinweis {
     color: #526078;
@@ -96,4 +118,34 @@
     .scan-werkzeuge button {
         flex: 1 1 130px;
     }
+}
+
+#scan-start {
+    text-align: center;
+}
+
+#scan-formular .scan-kamera-aktion {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    margin: 0;
+    padding: 18px 24px;
+    border: 1px solid #c5d8f2;
+    border-radius: 12px;
+    background: #edf4ff;
+    color: #0755b8;
+}
+
+#scan-formular .scan-kamera-aktion:hover {
+    background: #dceaff;
+}
+
+#scan-livebild {
+    display: block;
+    width: 100%;
+    max-height: 65vh;
+    border-radius: 8px;
+    object-fit: contain;
+    background: #e8edf5;
 }

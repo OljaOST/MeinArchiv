@@ -1,7 +1,12 @@
 "use strict";
 
 const formular = document.querySelector("#scan-formular");
-const dateiauswahl = document.querySelector("#aufnahme");
+const kameraStart = document.querySelector("#scan-start");
+const kameraOeffnen = document.querySelector("#scan-kamera-oeffnen");
+const kamera = document.querySelector("#scan-kamera");
+const livebild = document.querySelector("#scan-livebild");
+const ausloesen = document.querySelector("#scan-ausloesen");
+const kameraAbbrechen = document.querySelector("#scan-kamera-abbrechen");
 const editor = document.querySelector("#scan-editor");
 const bild = document.querySelector("#scan-bild");
 const abmessungen = document.querySelector("#scan-abmessungen");
@@ -16,17 +21,16 @@ const rechtsDrehen = document.querySelector("#scan-rechts");
 const reset = document.querySelector("#scan-reset");
 const ausschneiden = document.querySelector("#scan-ausschneiden");
 const abbrechen = document.querySelector("#scan-abbrechen");
-const seiten = ["links", "rechts", "oben", "unten"];
-const regler = Object.fromEntries(
-    seiten.map((seite) => [seite, document.querySelector(`#rand-${seite}`)])
-);
+
 const MAX_DATEIGROESSE = 10 * 1024 * 1024;
 const MAX_BILDSEITE = 2800;
 
 let original = null;
-let originalname = "scan";
-let ladeNummer = 0;
+let kameraStream = null;
+let kameraAnfrage = 0;
 let beschaeftigt = false;
+let rahmen;
+let zug = null;
 
 function zeigeFehler(text) {
     fehlerText.textContent = text;
@@ -56,27 +60,86 @@ function zeigeBild(quelle) {
 function aktualisiereBedienung() {
     const zuschnittOffen = !zuschnitt.hidden;
     uebernehmen.disabled = beschaeftigt || !original || zuschnittOffen;
-    dateiauswahl.disabled = beschaeftigt;
     for (const knopf of [linksDrehen, rechtsDrehen, reset, zuschneiden]) {
         knopf.disabled = beschaeftigt || !original || zuschnittOffen;
     }
     formular.setAttribute("aria-busy", String(beschaeftigt));
 }
 
-function aktualisiereAusschnitt() {
-    // Mindestens fünf Prozent der Breite und Höhe bleiben erhalten.
-    for (const [erste, zweite] of [["links", "rechts"], ["oben", "unten"]]) {
-        regler[erste].max = 95 - Number(regler[zweite].value);
-        regler[zweite].max = 95 - Number(regler[erste].value);
-    }
-    for (const seite of seiten) {
-        document.querySelector(`#wert-${seite}`).textContent = `${regler[seite].value} %`;
-    }
-    ausschnitt.style.left = `${regler.links.value}%`;
-    ausschnitt.style.right = `${regler.rechts.value}%`;
-    ausschnitt.style.top = `${regler.oben.value}%`;
-    ausschnitt.style.bottom = `${regler.unten.value}%`;
+function zeigeAusschnitt() {
+    ausschnitt.style.left = `${rahmen.links * 100}%`;
+    ausschnitt.style.top = `${rahmen.oben * 100}%`;
+    ausschnitt.style.right = `${(1 - rahmen.rechts) * 100}%`;
+    ausschnitt.style.bottom = `${(1 - rahmen.unten) * 100}%`;
 }
+
+function begrenze(wert, minimum, maximum) {
+    return Math.max(minimum, Math.min(maximum, wert));
+}
+
+function verschiebeAusschnitt(start, ecke, dx, dy) {
+    const groesse = bild.getBoundingClientRect();
+    // Die Griffe sollen sich auch auf kleinen Displays getrennt greifen lassen.
+    const minBreite = Math.min(start.rechts - start.links, 58 / groesse.width);
+    const minHoehe = Math.min(start.unten - start.oben, 58 / groesse.height);
+    rahmen = { ...start };
+    if (ecke) {
+        if (ecke.endsWith("l")) {
+            rahmen.links = begrenze(start.links + dx, 0, start.rechts - minBreite);
+        } else {
+            rahmen.rechts = begrenze(start.rechts + dx, start.links + minBreite, 1);
+        }
+        if (ecke.startsWith("o")) {
+            rahmen.oben = begrenze(start.oben + dy, 0, start.unten - minHoehe);
+        } else {
+            rahmen.unten = begrenze(start.unten + dy, start.oben + minHoehe, 1);
+        }
+    } else {
+        const x = begrenze(dx, -start.links, 1 - start.rechts);
+        const y = begrenze(dy, -start.oben, 1 - start.unten);
+        rahmen.links += x;
+        rahmen.rechts += x;
+        rahmen.oben += y;
+        rahmen.unten += y;
+    }
+    zeigeAusschnitt();
+}
+
+ausschnitt.addEventListener("pointerdown", (ereignis) => {
+    if (zug || ereignis.button !== 0) return;
+    const griff = ereignis.target.closest("[data-ecke]");
+    ereignis.preventDefault();
+    (griff || ausschnitt).focus({ preventScroll: true });
+    zug = {
+        id: ereignis.pointerId,
+        x: ereignis.clientX,
+        y: ereignis.clientY,
+        start: { ...rahmen },
+        ecke: griff?.dataset.ecke,
+    };
+    ausschnitt.setPointerCapture(ereignis.pointerId);
+});
+
+ausschnitt.addEventListener("pointermove", (ereignis) => {
+    if (zug?.id !== ereignis.pointerId) return;
+    const groesse = bild.getBoundingClientRect();
+    verschiebeAusschnitt(
+        zug.start, zug.ecke,
+        (ereignis.clientX - zug.x) / groesse.width,
+        (ereignis.clientY - zug.y) / groesse.height,
+    );
+});
+
+ausschnitt.addEventListener("lostpointercapture", () => { zug = null; });
+
+ausschnitt.addEventListener("keydown", (ereignis) => {
+    const schritte = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
+    const richtung = schritte[ereignis.key];
+    if (!richtung || !Array.isArray(richtung)) return;
+    ereignis.preventDefault();
+    const schritt = ereignis.shiftKey ? 0.05 : 0.01;
+    verschiebeAusschnitt(rahmen, ereignis.target.dataset.ecke, richtung[0] * schritt, richtung[1] * schritt);
+});
 
 function beendeZuschnitt() {
     zuschnitt.hidden = true;
@@ -85,70 +148,90 @@ function beendeZuschnitt() {
     aktualisiereBedienung();
 }
 
-function ladeFoto(datei) {
-    return new Promise((resolve, reject) => {
-        const adresse = URL.createObjectURL(datei);
-        const foto = new Image();
-        foto.onload = () => {
-            URL.revokeObjectURL(adresse);
-            resolve(foto);
-        };
-        foto.onerror = () => {
-            URL.revokeObjectURL(adresse);
-            reject(new Error("Das Bild konnte nicht geöffnet werden. Bitte wähle ein gültiges JPG- oder PNG-Bild."));
-        };
-        foto.src = adresse;
-    });
+function kameraSchliessen() {
+    kameraAnfrage++;
+    kameraStream?.getTracks().forEach((spur) => spur.stop());
+    kameraStream = null;
+    livebild.srcObject = null;
+    ausloesen.disabled = true;
+    kamera.hidden = true;
+    kameraStart.hidden = !editor.hidden;
 }
 
-dateiauswahl.addEventListener("change", async () => {
-    const nummer = ++ladeNummer;
-    const datei = dateiauswahl.files[0];
-    original = null;
-    editor.hidden = true;
+async function oeffneKamera() {
     loescheFehler();
-    beendeZuschnitt();
-    statusText.textContent = "";
-    if (!datei) return;
+    if (!navigator.mediaDevices?.getUserMedia) {
+        zeigeFehler("Öffne MeinArchiv über HTTPS oder auf diesem Gerät über localhost, um die Kamera zu nutzen.");
+        return;
+    }
 
-    if (!/\.(jpe?g|png)$/i.test(datei.name)) {
-        zeigeFehler("Bitte wähle ein JPG- oder PNG-Bild.");
-        return;
-    }
-    if (datei.size > MAX_DATEIGROESSE) {
-        zeigeFehler("Das Bild ist grösser als 10 MB. Bitte wähle eine kleinere Datei.");
-        return;
-    }
-    beschaeftigt = true;
-    statusText.textContent = "Foto wird vorbereitet …";
-    aktualisiereBedienung();
+    const anfrage = ++kameraAnfrage;
+    kameraStart.hidden = true;
+    kamera.hidden = false;
+    kameraAbbrechen.focus();
+    statusText.textContent = "Kamera wird geöffnet …";
     try {
-        const foto = await ladeFoto(datei);
-        if (nummer !== ladeNummer) return;
-        const faktor = Math.min(1, MAX_BILDSEITE / Math.max(foto.naturalWidth, foto.naturalHeight));
-        original = document.createElement("canvas");
-        original.width = Math.max(1, Math.round(foto.naturalWidth * faktor));
-        original.height = Math.max(1, Math.round(foto.naturalHeight * faktor));
-        const kontext = original.getContext("2d");
-        // Transparente Stellen werden beim späteren JPEG-Export weiss.
-        kontext.fillStyle = "white";
-        kontext.fillRect(0, 0, original.width, original.height);
-        kontext.drawImage(foto, 0, 0, original.width, original.height);
-        originalname = datei.name.replace(/\.[^.]+$/, "") || "scan";
-        zeigeBild(original);
-        editor.hidden = false;
-        statusText.textContent = faktor < 1
-            ? "Foto bereit. Für die Bearbeitung auf maximal 2800 Pixel pro Seite verkleinert."
-            : "Foto bereit. Du kannst es drehen, zuschneiden oder direkt übernehmen.";
+        const stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+                facingMode: { ideal: "environment" },
+                width: { ideal: 1920 },
+                height: { ideal: 1920 },
+            },
+            audio: false,
+        });
+        if (anfrage !== kameraAnfrage) {
+            stream.getTracks().forEach((spur) => spur.stop());
+            return;
+        }
+        kameraStream = stream;
+        livebild.srcObject = stream;
+        await livebild.play();
+        if (anfrage === kameraAnfrage) {
+            statusText.textContent = "";
+            ausloesen.disabled = false;
+            ausloesen.focus();
+        }
     } catch (fehler) {
-        original = null;
+        if (anfrage !== kameraAnfrage) return;
+        kameraSchliessen();
         statusText.textContent = "";
-        zeigeFehler(fehler.message);
-    } finally {
-        beschaeftigt = false;
-        aktualisiereBedienung();
+        zeigeFehler(fehler.name === "NotAllowedError"
+            ? "Erlaube den Kamerazugriff in deinem Browser und versuche es erneut."
+            : "Die Kamera ist nicht verfügbar. Prüfe, ob eine Kamera angeschlossen und frei ist.");
+        kameraOeffnen.focus();
     }
+}
+
+kameraOeffnen.addEventListener("click", oeffneKamera);
+
+kameraAbbrechen.addEventListener("click", () => {
+    kameraSchliessen();
+    statusText.textContent = "";
+    kameraOeffnen.focus();
 });
+
+ausloesen.addEventListener("click", () => {
+    if (!kameraStream || livebild.readyState < 2 || !livebild.videoWidth || !livebild.videoHeight) {
+        zeigeFehler("Das Kamerabild ist noch nicht bereit. Versuche es erneut.");
+        return;
+    }
+
+    const breite = livebild.videoWidth;
+    const hoehe = livebild.videoHeight;
+    const faktor = Math.min(1, MAX_BILDSEITE / Math.max(breite, hoehe));
+    original = document.createElement("canvas");
+    original.width = Math.max(1, Math.round(breite * faktor));
+    original.height = Math.max(1, Math.round(hoehe * faktor));
+    original.getContext("2d").drawImage(livebild, 0, 0, original.width, original.height);
+    zeigeBild(original);
+    loescheFehler();
+    editor.hidden = false;
+    kameraSchliessen();
+    aktualisiereBedienung();
+    linksDrehen.focus();
+});
+
+window.addEventListener("pagehide", kameraSchliessen);
 
 function dreheFoto(richtung) {
     if (!original || beschaeftigt || !zuschnitt.hidden) return;
@@ -176,29 +259,23 @@ reset.addEventListener("click", () => {
 });
 
 zuschneiden.addEventListener("click", () => {
-    for (const seite of seiten) {
-        regler[seite].max = 95;
-        regler[seite].value = 0;
-    }
+    rahmen = { links: 0.08, oben: 0.08, rechts: 0.92, unten: 0.92 };
     zuschnitt.hidden = false;
     ausschnitt.hidden = false;
     zuschneiden.setAttribute("aria-expanded", "true");
-    aktualisiereAusschnitt();
+    zeigeAusschnitt();
     aktualisiereBedienung();
-    regler.links.focus();
+    ausschnitt.focus({ preventScroll: true });
 });
-for (const seite of seiten) {
-    regler[seite].addEventListener("input", aktualisiereAusschnitt);
-}
 abbrechen.addEventListener("click", () => {
     beendeZuschnitt();
     zuschneiden.focus();
 });
 ausschneiden.addEventListener("click", () => {
-    const x = Math.floor(bild.width * Number(regler.links.value) / 100);
-    const y = Math.floor(bild.height * Number(regler.oben.value) / 100);
-    const rechts = Math.ceil(bild.width * (1 - Number(regler.rechts.value) / 100));
-    const unten = Math.ceil(bild.height * (1 - Number(regler.unten.value) / 100));
+    const x = Math.floor(bild.width * rahmen.links);
+    const y = Math.floor(bild.height * rahmen.oben);
+    const rechts = Math.min(bild.width, Math.ceil(bild.width * rahmen.rechts));
+    const unten = Math.min(bild.height, Math.ceil(bild.height * rahmen.unten));
     const neu = document.createElement("canvas");
     neu.width = Math.max(1, rechts - x);
     neu.height = Math.max(1, unten - y);
@@ -217,13 +294,13 @@ formular.addEventListener("submit", async (ereignis) => {
     statusText.textContent = "Dateinamenvorschlag wird erstellt …";
     aktualisiereBedienung();
     try {
-        const datei = await new Promise((resolve) => bild.toBlob(resolve, "image/jpeg", 0.92));
-        if (!datei || datei.size > MAX_DATEIGROESSE) {
-            throw new Error("Das bearbeitete Bild konnte nicht gespeichert werden. Bitte verwende ein kleineres Foto.");
+        const datei = await scanAlsPdf(bild);
+        if (datei.size + 4096 > MAX_DATEIGROESSE) {
+            throw new Error("Das PDF ist zu gross. Versuche es mit einem kleineren Ausschnitt.");
         }
         const daten = new FormData();
         daten.append("namensvorschlag", "ja");
-        daten.append("dokument", datei, `${originalname}.jpg`);
+        daten.append("dokument", datei, "scan.pdf");
         const antwort = await fetch(formular.action, {method: "POST", body: daten});
         if (!antwort.ok) {
             const inhalt = await antwort.json().catch(() => null);
@@ -244,3 +321,6 @@ formular.addEventListener("submit", async (ereignis) => {
 });
 
 aktualisiereBedienung();
+
+// Der Einstieg «Scannen» öffnet direkt die Kameravorschau.
+oeffneKamera();
