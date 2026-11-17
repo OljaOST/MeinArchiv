@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ dokument.dateiname }} – MeinArchiv</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='dokumentansicht.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='dokumentansicht.css', v=2) }}">
 </head>
 <body>
     <a href="{{ url_for('dokumente') }}">Zurück zu meinen Dokumenten</a>
@@ -32,8 +32,17 @@
             {% if vorschau == 'bild' %}
             <img class="detail-bild" src="{{ url_for('dokument_vorschau', dokument_id=dokument.id) }}" alt="Vorschau von {{ dokument.dateiname }}">
             {% elif vorschau == 'pdf' %}
-            <iframe class="detail-pdf" src="{{ url_for('dokument_vorschau', dokument_id=dokument.id) }}" title="PDF-Vorschau von {{ dokument.dateiname }}" loading="lazy"></iframe>
-            <p class="detail-hinweis">Falls dein Browser das PDF hier nicht anzeigt, lade die Datei herunter.</p>
+            <div id="pdf-vorschau" data-pdf="{{ url_for('dokument_vorschau', dokument_id=dokument.id) }}">
+                <div class="detail-pdf-seitenwahl" role="group" aria-label="PDF-Seiten" hidden>
+                    <button type="button" id="pdf-zurueck" aria-label="Vorherige Seite" disabled>‹</button>
+                    <span id="pdf-seitenstand" role="status"></span>
+                    <button type="button" id="pdf-weiter" aria-label="Nächste Seite" disabled>›</button>
+                </div>
+                <canvas id="pdf-seite" class="detail-pdf" role="img" hidden></canvas>
+                <p id="pdf-status" class="detail-hinweis" role="status"></p>
+            </div>
+            <noscript><p class="detail-hinweis">Aktiviere JavaScript für die PDF-Vorschau oder lade die Datei herunter.</p></noscript>
+            <script type="module" src="{{ url_for('static', filename='pdf-vorschau.js') }}"></script>
             {% else %}
             <p>Für dieses Dateiformat gibt es hier keine Vorschau. Lade das Dokument herunter und öffne es auf deinem Gerät.</p>
             {% endif %}

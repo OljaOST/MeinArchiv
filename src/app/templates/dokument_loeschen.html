@@ -15,12 +15,8 @@
         <p>Die Datei und ihre Angaben werden dauerhaft aus MeinArchiv entfernt. Die Kategorie und andere Dokumente bleiben erhalten.</p>
         <form method="post">
             <input type="hidden" name="bestaetigung" value="{{ bestaetigung }}">
-            <label class="detail-bestaetigung">
-                <input type="checkbox" name="loeschen" value="ja" required>
-                <span>Ich möchte dieses Dokument dauerhaft löschen.</span>
-            </label>
             <div class="detail-loeschaktionen">
-                <button type="submit" class="button-gefahr">Endgültig löschen</button>
+                <button type="submit" name="loeschen" value="ja" class="button-gefahr">Endgültig löschen</button>
                 <a href="{{ zurueck }}">Abbrechen</a>
             </div>
         </form>
