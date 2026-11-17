@@ -1,30 +1,29 @@
 <!DOCTYPE html>
+{% from 'symbole.html' import symbol %}
 <html lang="de">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Dokument hochladen – MeinArchiv</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='import.css') }}">
+    <script type="module" src="{{ url_for('static', filename='hochladen.js') }}" defer></script>
 </head>
 <body>
     <a href="{{ url_for('index') }}">Zurück zur Startseite</a>
-    <main>
+    <main class="import-ansicht">
         <h1>Dokument hochladen</h1>
-        <form action="{{ url_for('dokument_vorbereiten') }}" method="post" enctype="multipart/form-data">
-
-            <input type="hidden" name="namensvorschlag" value="ja">
-            <p>
-                <label for="dokument">Datei auswählen</label>
-
-                <input type="file" id="dokument" name="dokument" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" required>
-            </p>
-
-            <p>
-                Mit «Dokument übernehmen» wird die Datei zur Ermittlung des Dateinamens an OpenAI gesendet.
-            </p>
-
-            <button type="submit">Dokument übernehmen</button>
-        </form>
+        <section id="dateiauswahl" data-vorbereiten="{{ url_for('dokument_vorbereiten') }}">
+            <label for="dokument">
+                {{ symbol('upload', 'upload-symbol') }}
+                Datei auswählen
+            </label>
+            <input type="file" id="dokument" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" aria-describedby="upload-hinweis" disabled>
+            <p id="upload-hinweis">Bei der Auswahl wird die Datei für den Namensvorschlag an OpenAI gesendet.</p>
+            <noscript><p>Aktiviere JavaScript, um ein Dokument hochzuladen.</p></noscript>
+        </section>
+        {% set import_quelle = 'hochladen' %}
+        {% include 'import_entwurf.html' %}
     </main>
 </body>
 </html>

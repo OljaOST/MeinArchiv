@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+{% from 'symbole.html' import farbiger_ordner %}
 <html lang="de">
 
 <head>
@@ -30,7 +31,7 @@
             {% for ordner in kategorien + [{'id': none, 'name': 'Ohne Kategorie', 'anzahl': ohne_kategorie}] %}
             <li>
                 <a class="ordnerzeile" href="{{ url_for('dokumente_ohne_kategorie') if ordner.id is none else url_for('kategorie_dokumente', kategorie_id=ordner.id) }}">
-                    <span class="ordnersymbol" aria-hidden="true"><span></span></span>
+                    {{ farbiger_ordner(ordner) }}
                     <span class="ordnerangaben">
                         <strong>{{ ordner.name }}</strong>
                         <span>{{ ordner.anzahl }} {{ 'Dokument' if ordner.anzahl == 1 else 'Dokumente' }}</span>
@@ -44,6 +45,7 @@
         <ul class="dokumentliste">
             {% for dokument in dokumente %}
             <li class="dokumenteintrag">
+                {{ farbiger_ordner({'id': dokument.kategorie_id, 'name': dokument.kategoriename}) }}
                 <div class="dokument-info">
                     <a class="ordner-dateilink" href="{{ url_for('dokument_detail', dokument_id=dokument.id) }}">{{ dokument.dateiname }}</a>
                     <span>{{ dokument.kategoriename or "Ohne Kategorie" }}</span>

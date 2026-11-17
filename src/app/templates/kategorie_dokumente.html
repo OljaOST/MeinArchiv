@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+{% from 'symbole.html' import farbiger_ordner %}
 <html lang="de">
 <head>
     <meta charset="utf-8">
@@ -30,6 +31,7 @@
         <ul class="dokumentliste">
             {% for dokument in dokumente %}
             <li class="dokumenteintrag">
+                {{ farbiger_ordner(kategorie) }}
                 <div class="dokument-info">
                     <a class="ordner-dateilink" href="{{ url_for('dokument_detail', dokument_id=dokument.id) }}">{{ dokument.dateiname }}</a>
                     {% if dokument.ablagedatum %}<span>Ablage: {{ dokument.ablagedatum.strftime('%d.%m.%Y') }}</span>{% endif %}

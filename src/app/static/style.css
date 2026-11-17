@@ -324,3 +324,39 @@ button:focus-visible,
     color: #526078;
     font-size: 14px;
 }
+.meinarchiv-symbol {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    vertical-align: middle;
+}
+
+.meinarchiv-symbol.aktionssymbol {
+    width: 28px;
+    height: 28px;
+}
+
+.meinarchiv-symbol.upload-symbol {
+    width: 32px;
+    height: 32px;
+    color: #0755b8;
+}
+
+.meinarchiv-symbol.einfuegen-symbol {
+    width: 40px;
+    height: 40px;
+}
+
+.kategorie-bildzeichen {
+    width: 38px;
+    height: 38px;
+    padding: 7px;
+    border-radius: 10px;
+    background: var(--ordner-hintergrund, #ecf2f9);
+    color: #6e7a8b;
+}
+
+.ordner-blau { --ordner-hintergrund: #e3edfe; color: #3371d6; }
+.ordner-violett { --ordner-hintergrund: #ece5fd; color: #6048c3; }
+.ordner-gruen { --ordner-hintergrund: #e1f6eb; color: #26913b; }
+.ordner-orange { --ordner-hintergrund: #fff0e2; color: #e88825; }

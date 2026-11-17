@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+{% from 'symbole.html' import farbiger_ordner %}
 <html lang="de">
 
 <head>
@@ -17,6 +18,7 @@
     <ul class="dokumentliste">
         {% for kategorie in kategorien %}
         <li class="dokumenteintrag">
+            {{ farbiger_ordner(kategorie) }}
             <div class="dokument-info">
                 <strong>{{ kategorie.name }}</strong>
             </div>

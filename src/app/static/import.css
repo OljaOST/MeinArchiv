@@ -41,3 +41,21 @@
     flex: 1;
     min-width: 0;
 }
+
+.import-vorschau[hidden] {
+    display: none;
+}
+
+#dateiauswahl {
+    padding: 20px;
+    border: 1px solid #d9e3f2;
+    border-radius: 12px;
+    background: white;
+}
+
+#dateiauswahl label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}

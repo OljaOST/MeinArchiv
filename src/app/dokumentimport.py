@@ -74,27 +74,41 @@ def import_vorschau(dokument_id):
     return dokument_vorschau_anzeigen(dokument_id, ist_entwurf=True)
 
 
-def scan_entwurf_antwort(dokument_id):
-    dokument = db.session.get(Dokument, dokument_id)
-    if dokument is None or not dokument.ist_entwurf:
+def _dateinamensstamm(dateiname):
+    stamm = _ungueltige_zeichen.sub("-", Path(dateiname).stem)
+    return stamm.strip(" .") or "Dokument"
+
+
+def entwurf_antwort(dokument_id, quelle):
+    dokument = db.session.execute(
+        db.select(Dokument.dateiname, Dokument.ablagedatum).where(
+            Dokument.id == dokument_id,
+            Dokument.ist_entwurf.is_(True),
+        )
+    ).one_or_none()
+    if dokument is None:
         abort(404)
 
     dateiname = dokument.dateiname
-    if dokument.ablagedatum is None:
+    if quelle == "scan" and dokument.ablagedatum is None:
         datum = datetime.now(ZoneInfo("Europe/Zurich")).date()
         dateiname = erstelle_dateinamen(datum, "Dokument", "Unbekannt", ".pdf")
 
+    code = [dokument_id, "scan"] if quelle == "scan" else dokument_id
     return jsonify(
-        stamm=Path(dateiname).stem,
+        stamm=_dateinamensstamm(dateiname),
+        endung=Path(dateiname).suffix,
         ki_erkannt=dokument.ablagedatum is not None,
-        bestaetigung=_formularcode.dumps([dokument_id, "scan"]),
-        speichern=url_for("entwurf_speichern", dokument_id=dokument_id, quelle="scan"),
-        verwerfen=url_for("entwurf_verwerfen", dokument_id=dokument_id, quelle="scan"),
+        bestaetigung=_formularcode.dumps(code),
+        speichern=url_for("entwurf_speichern", dokument_id=dokument_id, quelle=quelle),
+        verwerfen=url_for("entwurf_verwerfen", dokument_id=dokument_id, quelle=quelle),
+        vorschau=url_for("entwurf_vorschau", dokument_id=dokument_id),
     )
 
 
 def import_speichern(dokument_id):
-    scan = request.args.get("quelle") == "scan"
+    quelle = request.args.get("quelle")
+    scan = quelle == "scan"
     scan_post = (
         scan and request.method == "POST" and request.form.get("scan_editor") == "ja"
     )
@@ -115,8 +129,7 @@ def import_speichern(dokument_id):
             return redirect(url_for("dokument_detail", dokument_id=dokument_id), 303)
 
         endung = Path(dokument.dateiname).suffix
-        stamm = _ungueltige_zeichen.sub("-", Path(dokument.dateiname).stem)
-        stamm = stamm.strip(" .") or "Dokument"
+        stamm = _dateinamensstamm(dokument.dateiname)
         fehler = None
         if request.method == "POST":
             stamm = request.form.get("dateiname", "").strip()
@@ -176,7 +189,7 @@ def import_speichern(dokument_id):
             endung=endung,
             bestaetigung=_formularcode.dumps(dokument_id),
             fehler=fehler,
-            scan=scan,
+            quelle=quelle if quelle in {"scan", "hochladen", "einfuegen"} else None,
         ), (400 if fehler else 200)
     except SQLAlchemyError:
         db.session.rollback()

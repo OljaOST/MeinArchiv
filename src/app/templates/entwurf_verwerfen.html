@@ -9,10 +9,10 @@
 </head>
 
 <body>
-    {% if scan %}
+    {% if quelle == 'scan' %}
     <a href="{{ url_for('scannen') }}">Zurück zum Scannen</a>
     {% else %}
-    <a href="{{ url_for('dokumente') }}">Zurück zu meinen Dokumenten</a>
+    <a href="{{ url_for('index') }}">Zurück zur Startseite</a>
     {% endif %}
 
     <h1>Upload-Entwurf verwerfen</h1>
@@ -28,18 +28,14 @@
     </p>
 
     <form action="{{ url_for('entwurf_verwerfen',
-                             dokument_id=entwurf.id, quelle='scan' if scan else None) }}" method="post">
+                             dokument_id=entwurf.id, quelle=quelle) }}" method="post">
 
         <button type="submit" class="button-gefahr">
             Entwurf endgültig verwerfen
         </button>
     </form>
 
-    {% if scan %}
-    <a href="{{ url_for('entwurf_speichern', dokument_id=entwurf.id, quelle='scan') }}">Abbrechen</a>
-    {% else %}
-    <a href="{{ url_for('dokumente') }}">Abbrechen</a>
-    {% endif %}
+    <a href="{{ url_for('entwurf_speichern', dokument_id=entwurf.id, quelle=quelle) }}">Abbrechen</a>
 </body>
 
 </html>

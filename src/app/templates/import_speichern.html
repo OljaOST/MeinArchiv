@@ -8,10 +8,10 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='import.css') }}">
 </head>
 <body>
-    {% if scan %}
+    {% if quelle == 'scan' %}
     <a href="{{ url_for('scannen') }}">Zurück zum Scannen</a>
     {% else %}
-    <a href="{{ url_for('dokumente') }}">Zurück zu meinen Dokumenten</a>
+    <a href="{{ url_for('index') }}">Zurück zur Startseite</a>
     {% endif %}
     <main class="import-ansicht">
         <h1>Dokumentvorschau</h1>
@@ -37,7 +37,9 @@
             {% endif %}
             <button type="submit">In meine Dokumente speichern</button>
         </form>
-        <a href="{{ url_for('entwurf_verwerfen', dokument_id=dokument.id, quelle='scan' if scan else None) }}">Entwurf verwerfen</a>
+        <a href="{{ url_for('entwurf_verwerfen', dokument_id=dokument.id, quelle=quelle) }}">
+            {{ 'Entwurf löschen' if quelle == 'einfuegen' else 'Entwurf verwerfen' }}
+        </a>
     </main>
 </body>
 </html>

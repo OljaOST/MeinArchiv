@@ -1,0 +1,18 @@
+<p id="upload-status" role="status"></p>
+<p id="upload-fehler" role="alert" hidden></p>
+
+<section id="upload-entwurf" hidden>
+    <div class="import-vorschau" id="upload-vorschau" hidden></div>
+    <form method="post" id="upload-speichern" class="import-formular">
+        <input type="hidden" name="bestaetigung">
+        <label for="dateiname">Dokumentname</label>
+        <div class="import-dateiname">
+            <input type="text" id="dateiname" name="dateiname" required>
+            <span id="upload-endung"></span>
+        </div>
+        <button type="submit">In meine Dokumente speichern</button>
+    </form>
+    <a id="upload-verwerfen">
+        {{ 'Entwurf löschen' if import_quelle == 'einfuegen' else 'Entwurf verwerfen' }}
+    </a>
+</section>

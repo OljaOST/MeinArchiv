@@ -27,11 +27,19 @@ const rechtsDrehen = document.querySelector("#scan-rechts");
 const reset = document.querySelector("#scan-reset");
 const ausschneiden = document.querySelector("#scan-ausschneiden");
 const abbrechen = document.querySelector("#scan-abbrechen");
+const seiteHinzufuegen = document.querySelector("#scan-seite-hinzufuegen");
+const seiteEntfernen = document.querySelector("#scan-seite-entfernen");
+const vorherigeSeite = document.querySelector("#scan-vorherige");
+const naechsteSeite = document.querySelector("#scan-naechste");
+const seitenstand = document.querySelector("#scan-seitenstand");
+const kiHinweis = document.querySelector("#scan-ki-hinweis");
 
 const MAX_DATEIGROESSE = 10 * 1024 * 1024;
 const MAX_BILDSEITE = 2800;
 
-let original = null;
+const seiten = [];
+let seitenIndex = 0;
+let bildGeaendert = false;
 let kameraStream = null;
 let kameraAnfrage = 0;
 let beschaeftigt = false;
@@ -65,14 +73,38 @@ function zeigeBild(quelle) {
     abmessungen.textContent = `${bild.width} × ${bild.height} Pixel`;
 }
 
+function bearbeitungMerken() {
+    if (bildGeaendert) {
+        seiten[seitenIndex].bearbeitet = kopiereBild(bild);
+        bildGeaendert = false;
+    }
+}
+
+function zeigeSeite(index) {
+    seitenIndex = index;
+    const seite = seiten[index];
+    zeigeBild(seite.bearbeitet || seite.original);
+    bildGeaendert = false;
+    seitenstand.textContent = `Seite ${index + 1} von ${seiten.length}`;
+    aktualisiereBedienung();
+}
+
 function aktualisiereBedienung() {
     const zuschnittOffen = !zuschnitt.hidden;
-    speichern.disabled = beschaeftigt || !entwurf || zuschnittOffen;
+    const editorGesperrt = beschaeftigt || editor.hidden || zuschnittOffen;
+    speichern.disabled = editorGesperrt || !entwurf;
+    seiteHinzufuegen.disabled = editorGesperrt;
+    seiteEntfernen.hidden = seiten.length < 2;
+    seiteEntfernen.disabled = editorGesperrt;
+    vorherigeSeite.disabled = editorGesperrt || seitenIndex === 0;
+    naechsteSeite.disabled = editorGesperrt || seitenIndex >= seiten.length - 1;
     dateiname.disabled = beschaeftigt || !entwurf;
-    verwerfen.disabled = beschaeftigt || namensvorschlagLaedt;
-    ruecklink.setAttribute("aria-disabled", String(verwerfen.disabled));
+    const rueckwegGesperrt = beschaeftigt || namensvorschlagLaedt;
+    verwerfen.hidden = !entwurf;
+    verwerfen.setAttribute("aria-disabled", String(rueckwegGesperrt));
+    ruecklink.setAttribute("aria-disabled", String(rueckwegGesperrt));
     for (const knopf of [linksDrehen, rechtsDrehen, reset, zuschneiden]) {
-        knopf.disabled = beschaeftigt || !original || zuschnittOffen;
+        knopf.disabled = editorGesperrt;
     }
     formular.setAttribute("aria-busy", String(beschaeftigt));
 }
@@ -169,9 +201,18 @@ function kameraSchliessen() {
     kameraStart.hidden = !editor.hidden;
 }
 
+function kameraAbbruch() {
+    editor.hidden = seiten.length === 0;
+    kameraSchliessen();
+    aktualisiereBedienung();
+    statusText.textContent = "";
+    (editor.hidden ? kameraOeffnen : seiteHinzufuegen).focus();
+}
+
 async function oeffneKamera() {
     loescheFehler();
     if (!navigator.mediaDevices?.getUserMedia) {
+        kameraAbbruch();
         zeigeFehler("Öffne MeinArchiv über HTTPS oder auf diesem Gerät über localhost, um die Kamera zu nutzen.");
         return;
     }
@@ -179,6 +220,7 @@ async function oeffneKamera() {
     const anfrage = ++kameraAnfrage;
     kameraStart.hidden = true;
     kamera.hidden = false;
+    kiHinweis.hidden = seiten.length > 0;
     kameraAbbrechen.focus();
     statusText.textContent = "Kamera wird geöffnet …";
     try {
@@ -204,21 +246,44 @@ async function oeffneKamera() {
         }
     } catch (fehler) {
         if (anfrage !== kameraAnfrage) return;
-        kameraSchliessen();
-        statusText.textContent = "";
+        kameraAbbruch();
         zeigeFehler(fehler.name === "NotAllowedError"
             ? "Erlaube den Kamerazugriff in deinem Browser und versuche es erneut."
             : "Die Kamera ist nicht verfügbar. Prüfe, ob eine Kamera angeschlossen und frei ist.");
-        kameraOeffnen.focus();
     }
 }
 
 kameraOeffnen.addEventListener("click", oeffneKamera);
 
-kameraAbbrechen.addEventListener("click", () => {
-    kameraSchliessen();
+kameraAbbrechen.addEventListener("click", kameraAbbruch);
+
+seiteHinzufuegen.addEventListener("click", () => {
+    bearbeitungMerken();
+    editor.hidden = true;
+    aktualisiereBedienung();
+    oeffneKamera();
+});
+
+function wechsleSeite(richtung) {
+    bearbeitungMerken();
+    loescheFehler();
     statusText.textContent = "";
-    kameraOeffnen.focus();
+    zeigeSeite(seitenIndex + richtung);
+    const weiter = richtung < 0 ? vorherigeSeite : naechsteSeite;
+    if (weiter.disabled) {
+        (richtung < 0 ? naechsteSeite : vorherigeSeite).focus();
+    }
+}
+
+vorherigeSeite.addEventListener("click", () => wechsleSeite(-1));
+naechsteSeite.addEventListener("click", () => wechsleSeite(1));
+
+seiteEntfernen.addEventListener("click", () => {
+    seiten.splice(seitenIndex, 1);
+    zeigeSeite(Math.min(seitenIndex, seiten.length - 1));
+    loescheFehler();
+    statusText.textContent = "Seite entfernt.";
+    if (seiteEntfernen.hidden) seiteHinzufuegen.focus();
 });
 
 ausloesen.addEventListener("click", () => {
@@ -230,26 +295,27 @@ ausloesen.addEventListener("click", () => {
     const breite = livebild.videoWidth;
     const hoehe = livebild.videoHeight;
     const faktor = Math.min(1, MAX_BILDSEITE / Math.max(breite, hoehe));
-    original = document.createElement("canvas");
+    const original = document.createElement("canvas");
     original.width = Math.max(1, Math.round(breite * faktor));
     original.height = Math.max(1, Math.round(hoehe * faktor));
     original.getContext("2d").drawImage(livebild, 0, 0, original.width, original.height);
-    zeigeBild(original);
+    seiten.push({original, bearbeitet: null});
     loescheFehler();
     editor.hidden = false;
     document.querySelector("#scan-startseite").hidden = true;
     ruecklink.hidden = false;
     kameraSchliessen();
-    aktualisiereBedienung();
+    zeigeSeite(seiten.length - 1);
     linksDrehen.focus();
-    ladeNamensvorschlag();
+    if (seiten.length === 1) ladeNamensvorschlag();
 });
 
 window.addEventListener("pagehide", kameraSchliessen);
 
 function dreheFoto(richtung) {
-    if (!original || beschaeftigt || !zuschnitt.hidden) return;
+    if (beschaeftigt || !zuschnitt.hidden) return;
     const vorher = kopiereBild(bild);
+    bildGeaendert = true;
     bild.width = vorher.height;
     bild.height = vorher.width;
     const kontext = bild.getContext("2d");
@@ -265,8 +331,10 @@ function dreheFoto(richtung) {
 linksDrehen.addEventListener("click", () => dreheFoto(-1));
 rechtsDrehen.addEventListener("click", () => dreheFoto(1));
 reset.addEventListener("click", () => {
-    if (!original || beschaeftigt) return;
-    zeigeBild(original);
+    const seite = seiten[seitenIndex];
+    seite.bearbeitet = null;
+    bildGeaendert = false;
+    zeigeBild(seite.original);
     beendeZuschnitt();
     loescheFehler();
     statusText.textContent = "Drehung und Zuschnitt zurückgesetzt.";
@@ -295,15 +363,16 @@ ausschneiden.addEventListener("click", () => {
     neu.height = Math.max(1, unten - y);
     neu.getContext("2d").drawImage(bild, x, y, neu.width, neu.height, 0, 0, neu.width, neu.height);
     zeigeBild(neu);
+    bildGeaendert = true;
     beendeZuschnitt();
     statusText.textContent = "Ausschnitt übernommen.";
     zuschneiden.focus();
 });
 
-async function pdfDaten(quelle) {
-    const pdf = await scanAlsPdf(quelle);
+async function pdfDaten(bilder) {
+    const pdf = await scanAlsPdf(bilder);
     if (pdf.size + 4096 > MAX_DATEIGROESSE) {
-        throw new Error("Das PDF ist zu gross. Versuche es mit einem kleineren Ausschnitt.");
+        throw new Error("Das PDF überschreitet die Uploadgrenze von 10 MB. Verkleinere einen Ausschnitt oder entferne eine Seite.");
     }
     const daten = new FormData();
     daten.append("dokument", pdf, "scan.pdf");
@@ -317,7 +386,7 @@ async function ladeNamensvorschlag() {
     nameStatus.textContent = "Dateinamenvorschlag wird erstellt …";
     aktualisiereBedienung();
     try {
-        const daten = await pdfDaten(original);
+        const daten = await pdfDaten([seiten[0].original]);
         daten.append("quelle", "scan");
         const antwort = await fetch(formular.action, {method: "POST", body: daten});
         const ergebnis = await antwort.json().catch(() => null);
@@ -325,6 +394,7 @@ async function ladeNamensvorschlag() {
             throw new Error(ergebnis?.fehler || "Der Namensvorschlag konnte nicht geladen werden.");
         }
         entwurf = ergebnis;
+        verwerfen.href = entwurf.verwerfen;
         dateiname.value = entwurf.stamm;
         namensfeld.hidden = false;
         nameStatus.textContent = entwurf.ki_erkannt
@@ -344,7 +414,7 @@ erneutVersuchen.addEventListener("click", ladeNamensvorschlag);
 
 async function zurueckZumScannen(ereignis) {
     ereignis.preventDefault();
-    if (verwerfen.disabled) return;
+    if (beschaeftigt || namensvorschlagLaedt) return;
     beschaeftigt = true;
     loescheFehler();
     aktualisiereBedienung();
@@ -374,7 +444,8 @@ formular.addEventListener("submit", async (ereignis) => {
     statusText.textContent = "Scan wird gespeichert …";
     aktualisiereBedienung();
     try {
-        const daten = await pdfDaten(bild);
+        bearbeitungMerken();
+        const daten = await pdfDaten(seiten.map((seite) => seite.bearbeitet || seite.original));
         daten.append("scan_editor", "ja");
         daten.append("dateiname", dateiname.value);
         daten.append("bestaetigung", entwurf.bestaetigung);

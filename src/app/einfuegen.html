@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+{% from 'symbole.html' import symbol %}
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Einfügen – MeinArchiv</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='import.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='einfuegen.css') }}">
+    <script type="module" src="{{ url_for('static', filename='einfuegen.js') }}"></script>
+</head>
+<body>
+    <a href="{{ url_for('index') }}">Zurück zur Startseite</a>
+    <main class="import-ansicht">
+        <h1>Dokument einfügen</h1>
+        <section id="einfuegebereich" tabindex="0" aria-labelledby="einfuegen-titel"
+                 data-vorbereiten="{{ url_for('dokument_vorbereiten') }}">
+            {{ symbol('clipboard', 'einfuegen-symbol') }}
+            <h2 id="einfuegen-titel">Dokument hier einfügen</h2>
+            <p>Klicke hier und drücke ⌘ + V am Mac oder Strg + V unter Windows.</p>
+            <p class="einfuegen-hinweis">Beim Einfügen wird die Datei für den Namensvorschlag an OpenAI gesendet.</p>
+        </section>
+        <noscript><p>Aktiviere JavaScript, um ein Dokument einzufügen.</p></noscript>
+
+        {% set import_quelle = 'einfuegen' %}
+        {% include 'import_entwurf.html' %}
+    </main>
+</body>
+</html>

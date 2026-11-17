@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+{% from 'symbole.html' import kategorie_symbol %}
+<html lang="de">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Meine Dokumente – MeinArchiv</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ordner.css') }}">
+</head>
+
+<body>
+    <a href="/">Zurück zur Startseite</a>
+
+    <main>
+        <h1>Meine Dokumente</h1>
+
+        <form class="ordner-suche" action="{{ url_for('dokumente') }}" method="get" role="search">
+            <label for="suche">Nach Dateiname suchen</label>
+
+            <input type="search" id="suche" name="q" value="{{ suche }}" placeholder="Dokumente durchsuchen …">
+
+            <button type="submit">Suchen</button>
+
+            {% if suche %}<a href="{{ url_for('dokumente') }}">Zur Ordnerübersicht</a>{% endif %}
+        </form>
+
+        {% if not suche %}
+        <ul class="ordnerliste" aria-label="Dokumentordner">
+            {% for ordner in kategorien + [{'id': none, 'name': 'Ohne Kategorie', 'anzahl': ohne_kategorie}] %}
+            <li>
+                <a class="ordnerzeile" href="{{ url_for('dokumente_ohne_kategorie') if ordner.id is none else url_for('kategorie_dokumente', kategorie_id=ordner.id) }}">
+                    {{ kategorie_symbol(ordner.name) }}
+                    <span class="ordnerangaben">
+                        <strong>{{ ordner.name }}</strong>
+                        <span>{{ ordner.anzahl }} {{ 'Dokument' if ordner.anzahl == 1 else 'Dokumente' }}</span>
+                    </span>
+                    <span class="ordnerpfeil" aria-hidden="true">›</span>
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+        {% elif dokumente %}
+        <ul class="dokumentliste">
+            {% for dokument in dokumente %}
+            <li class="dokumenteintrag">
+                {{ kategorie_symbol(dokument.kategoriename) }}
+                <div class="dokument-info">
+                    <a class="ordner-dateilink" href="{{ url_for('dokument_detail', dokument_id=dokument.id) }}">{{ dokument.dateiname }}</a>
+                    <span>{{ dokument.kategoriename or "Ohne Kategorie" }}</span>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p>Keine Dokumente für «{{ suche }}» gefunden.</p>
+        {% endif %}
+
+        <p>
+            <a href="{{ url_for('kategorien') }}">Kategorien verwalten</a>
+        </p>
+    </main>
+</body>
+
+</html>

@@ -1,0 +1,37 @@
+{% macro symbol(typ, klasse='') -%}
+<svg class="meinarchiv-symbol meinarchiv-symbol--{{ typ }} {{ klasse }}" viewBox="0 0 24 24"
+     fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+     stroke-linejoin="round" aria-hidden="true" focusable="false">
+    {% if typ == 'scan' %}
+    <path d="M8 3H5a2 2 0 0 0-2 2v3m13-5h3a2 2 0 0 1 2 2v3M3 16v3a2 2 0 0 0 2 2h3m13-5v3a2 2 0 0 1-2 2h-3M7 12h10"/>
+    {% elif typ == 'upload' %}
+    <path d="M8 18H6a4 4 0 0 1-.8-7.9 6.5 6.5 0 0 1 12.6-.4 4.2 4.2 0 0 1 .1 8.3H16m-4 2v-8m-3 3 3-3 3 3"/>
+    {% elif typ == 'clipboard' %}
+    <rect x="8" y="2" width="8" height="5" rx="1.5"/>
+    <path d="M8 5H6a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M8 12h8m-8 4h5"/>
+    {% elif typ == 'erfolg' %}
+    <circle cx="12" cy="12" r="11" fill="currentColor" stroke="none"/>
+    <path d="m7 12 3 3 7-7" stroke="#fff" stroke-width="2"/>
+    {% else %}
+    <path d="M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6Z"/>
+    {% endif %}
+</svg>
+{%- endmacro %}
+
+{% macro farbiger_ordner(kategorie) -%}
+    {%- set farben = {
+        'rechnung': 'blau', 'rechnungen': 'blau',
+        'vertrag': 'violett', 'verträge': 'violett',
+        'bank': 'gruen', 'bankunterlagen': 'gruen',
+        'kontoauszug': 'gruen', 'kontoauszüge': 'gruen',
+        'versicherung': 'orange', 'versicherungen': 'orange',
+        'steuer': 'blau', 'steuern': 'blau',
+        'sonstige': 'grau'
+    } -%}
+    {%- set palette = ['blau', 'violett', 'gruen', 'orange'] -%}
+    {%- set name = (kategorie.name or '') | trim | lower -%}
+    {%- set typ = name.split('_', 1)[0] | trim -%}
+    {%- set grundfarbe = palette[(kategorie.id - 1) % (palette | length)] if kategorie.id is not none else 'grau' -%}
+    {%- set farbe = farben.get(typ, grundfarbe) -%}
+    {{ symbol('ordner', 'kategorie-bildzeichen ordner-' ~ farbe) }}
+{%- endmacro %}

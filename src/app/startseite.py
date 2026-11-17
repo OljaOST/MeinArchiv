@@ -28,6 +28,9 @@ def kategorien_mit_anzahl():
 
 
 def startseite_anzeigen():
+    gespeichert = request.args.get("gespeichert", type=int)
+    if gespeichert is not None and not 0 < gespeichert <= 2_147_483_647:
+        gespeichert = None
     try:
         kategorien = kategorien_mit_anzahl()
 
@@ -36,6 +39,7 @@ def startseite_anzeigen():
                 Dokument.id,
                 Dokument.dateiname,
                 Dokument.ablagedatum,
+                Dokument.kategorie_id,
                 Kategorie.name.label("kategoriename"),
             )
             .outerjoin(Kategorie, Dokument.kategorie_id == Kategorie.id)
@@ -50,6 +54,12 @@ def startseite_anzeigen():
         anzahl = db.session.scalar(
             db.select(db.func.count(Dokument.id)).where(Dokument.ist_entwurf.is_(False))
         )
+        if gespeichert and gespeichert not in {dokument.id for dokument in dokumente}:
+            gespeichert = db.session.scalar(
+                db.select(Dokument.id).where(
+                    Dokument.id == gespeichert, Dokument.ist_entwurf.is_(False)
+                )
+            )
     except SQLAlchemyError:
         db.session.rollback()
         return (
@@ -69,7 +79,7 @@ def startseite_anzeigen():
         dokumente=dokumente,
         anzahl=anzahl,
         ladefehler=False,
-        gespeichert=request.args.get("gespeichert", type=int),
+        gespeichert=gespeichert,
     )
 
 
@@ -78,7 +88,7 @@ def kategorie_dokumente_anzeigen(kategorie_id):
 
     try:
         if kategorie_id is None:
-            kategorie = {"name": "Ohne Kategorie"}
+            kategorie = {"id": None, "name": "Ohne Kategorie"}
         else:
             kategorie = db.session.get(Kategorie, kategorie_id)
             if kategorie is None:

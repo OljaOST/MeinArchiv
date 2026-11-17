@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Scannen – MeinArchiv</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/scannen.css?v=4">
+    <script src="/static/scan-pdf.js?v=3" defer></script>
+    <script src="/static/scannen.js?v=6" defer></script>
+</head>
+<body>
+    <a id="scan-startseite" href="/">Zurück zur Startseite</a>
+    <a id="scan-zurueck" href="{{ url_for('scannen') }}" hidden>Zurück zum Scannen</a>
+    <main>
+        <h1>Scannen</h1>
+        <form id="scan-formular" action="{{ url_for('dokument_vorbereiten') }}" method="post" enctype="multipart/form-data">
+            <div id="scan-start" hidden>
+                <button type="button" id="scan-kamera-oeffnen" class="scan-kamera-aktion">
+                    <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                        <path d="M3 6h4l2-3h6l2 3h4v14H3z"/>
+                        <circle cx="12" cy="13" r="4"/>
+                    </svg>
+                    <span>Kamera erneut öffnen</span>
+                </button>
+            </div>
+
+            <div id="scan-kamera" hidden>
+                <video id="scan-livebild" autoplay muted playsinline aria-label="Kameravorschau"></video>
+                <div class="scan-werkzeuge">
+                    <button type="button" id="scan-ausloesen" disabled>Foto aufnehmen</button>
+                    <button type="button" id="scan-kamera-abbrechen" class="scan-nebenaktion">Abbrechen</button>
+                </div>
+                <p class="scan-hinweis">Beim Aufnehmen wird das Kamerabild für den Namensvorschlag an OpenAI gesendet.</p>
+            </div>
+
+            <section id="scan-editor" aria-labelledby="vorschau-titel" hidden>
+                <h2 id="vorschau-titel">Scan prüfen</h2>
+                <div class="scan-bildbereich">
+                    <canvas id="scan-bild" role="img" aria-label="Vorschau des Dokuments"></canvas>
+                    <div id="scan-ausschnitt" tabindex="0" role="group" aria-label="Zuschnittrahmen" aria-describedby="scan-zuschnitt-hinweis" hidden>
+                        <button type="button" class="scan-griff" data-ecke="ol" aria-label="Obere linke Ecke"></button>
+                        <button type="button" class="scan-griff" data-ecke="or" aria-label="Obere rechte Ecke"></button>
+                        <button type="button" class="scan-griff" data-ecke="ul" aria-label="Untere linke Ecke"></button>
+                        <button type="button" class="scan-griff" data-ecke="ur" aria-label="Untere rechte Ecke"></button>
+                    </div>
+                </div>
+                <p id="scan-abmessungen" class="scan-hinweis"></p>
+                <div class="scan-werkzeuge" role="group" aria-label="Foto bearbeiten">
+                    <button type="button" id="scan-links" class="scan-nebenaktion">↶ Links drehen</button>
+                    <button type="button" id="scan-rechts" class="scan-nebenaktion">↷ Rechts drehen</button>
+                    <button type="button" id="scan-zuschneiden" class="scan-nebenaktion" aria-expanded="false" aria-controls="scan-zuschnitt">Zuschneiden</button>
+                    <button type="button" id="scan-reset" class="scan-nebenaktion">Original wiederherstellen</button>
+                </div>
+
+                <fieldset id="scan-zuschnitt" hidden>
+                    <legend>Ausschnitt festlegen</legend>
+                    <p id="scan-zuschnitt-hinweis">Ziehe den Rahmen oder seine Ecken. Mit den Pfeiltasten kannst du den fokussierten Rahmen oder die Ecke verschieben.</p>
+                    <div class="scan-werkzeuge">
+                        <button type="button" id="scan-ausschneiden">Ausschnitt übernehmen</button>
+                        <button type="button" id="scan-abbrechen" class="scan-nebenaktion">Abbrechen</button>
+                    </div>
+                </fieldset>
+                <p id="scan-name-status" role="status"></p>
+                <div id="scan-namensfeld" hidden>
+                    <label for="scan-dateiname">Dokumentname</label>
+                    <div class="scan-dateiname">
+                        <input id="scan-dateiname" type="text" name="dateiname" maxlength="251" required disabled>
+                        <span>.pdf</span>
+                    </div>
+                </div>
+                <div class="scan-werkzeuge">
+                    <button type="submit" id="scan-speichern" disabled>In meine Dokumente speichern</button>
+                    <button type="button" id="scan-name-erneut" class="scan-nebenaktion" hidden>Namensvorschlag erneut laden</button>
+                </div>
+                <a id="scan-verwerfen" hidden>Entwurf verwerfen</a>
+            </section>
+
+            <p id="scan-status" role="status" aria-live="polite"></p>
+            <p id="scan-fehler" role="alert" hidden></p>
+            <noscript><p>Bitte aktiviere JavaScript für die Kamera oder verwende <a href="{{ url_for('hochladen') }}">Hochladen</a>.</p></noscript>
+        </form>
+    </main>
+</body>
+</html>

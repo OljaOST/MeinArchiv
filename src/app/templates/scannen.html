@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Scannen – MeinArchiv</title>
     <link rel="stylesheet" href="/static/style.css">
-    <link rel="stylesheet" href="/static/scannen.css?v=4">
-    <script src="/static/scan-pdf.js?v=3" defer></script>
-    <script src="/static/scannen.js?v=5" defer></script>
+    <link rel="stylesheet" href="/static/scannen.css?v=5">
+    <script src="/static/scan-pdf.js?v=4" defer></script>
+    <script src="/static/scannen.js?v=7" defer></script>
 </head>
 <body>
     <a id="scan-startseite" href="/">Zurück zur Startseite</a>
@@ -31,7 +31,7 @@
                     <button type="button" id="scan-ausloesen" disabled>Foto aufnehmen</button>
                     <button type="button" id="scan-kamera-abbrechen" class="scan-nebenaktion">Abbrechen</button>
                 </div>
-                <p class="scan-hinweis">Beim Aufnehmen wird das Kamerabild für den Namensvorschlag an OpenAI gesendet.</p>
+                <p id="scan-ki-hinweis" class="scan-hinweis">Die erste Aufnahme wird für den Namensvorschlag an OpenAI gesendet.</p>
             </div>
 
             <section id="scan-editor" aria-labelledby="vorschau-titel" hidden>
@@ -45,12 +45,19 @@
                         <button type="button" class="scan-griff" data-ecke="ur" aria-label="Untere rechte Ecke"></button>
                     </div>
                 </div>
+                <div class="scan-seitenwahl" role="group" aria-label="Scanseiten">
+                    <button type="button" id="scan-vorherige" class="scan-nebenaktion" aria-label="Vorherige Seite">‹</button>
+                    <span id="scan-seitenstand" role="status"></span>
+                    <button type="button" id="scan-naechste" class="scan-nebenaktion" aria-label="Nächste Seite">›</button>
+                </div>
                 <p id="scan-abmessungen" class="scan-hinweis"></p>
                 <div class="scan-werkzeuge" role="group" aria-label="Foto bearbeiten">
                     <button type="button" id="scan-links" class="scan-nebenaktion">↶ Links drehen</button>
                     <button type="button" id="scan-rechts" class="scan-nebenaktion">↷ Rechts drehen</button>
                     <button type="button" id="scan-zuschneiden" class="scan-nebenaktion" aria-expanded="false" aria-controls="scan-zuschnitt">Zuschneiden</button>
                     <button type="button" id="scan-reset" class="scan-nebenaktion">Original wiederherstellen</button>
+                    <button type="button" id="scan-seite-hinzufuegen" class="scan-nebenaktion">Seite hinzufügen</button>
+                    <button type="button" id="scan-seite-entfernen" class="scan-nebenaktion" hidden>Seite entfernen</button>
                 </div>
 
                 <fieldset id="scan-zuschnitt" hidden>
@@ -71,9 +78,9 @@
                 </div>
                 <div class="scan-werkzeuge">
                     <button type="submit" id="scan-speichern" disabled>In meine Dokumente speichern</button>
-                    <button type="button" id="scan-verwerfen" class="scan-nebenaktion">Entwurf verwerfen</button>
                     <button type="button" id="scan-name-erneut" class="scan-nebenaktion" hidden>Namensvorschlag erneut laden</button>
                 </div>
+                <a id="scan-verwerfen" hidden>Entwurf verwerfen</a>
             </section>
 
             <p id="scan-status" role="status" aria-live="polite"></p>

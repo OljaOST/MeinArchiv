@@ -2,7 +2,7 @@ from .dokumentimport import (
     import_speichern,
     import_vorschau,
     namensvorschlag_vorbereiten,
-    scan_entwurf_antwort,
+    entwurf_antwort,
 )
 from .dokumentbearbeitung import dokument_angaben_bearbeiten
 from flask_migrate import Migrate
@@ -113,6 +113,7 @@ def dokumente():
             db.select(
                 Dokument.id,
                 Dokument.dateiname,
+                Dokument.kategorie_id,
                 Kategorie.name.label("kategoriename"),
             )
             .outerjoin(
@@ -604,9 +605,9 @@ def dokument_vorbereiten():
     if not inhalt:
         return jsonify(fehler="Die Datei ist leer."), 400
 
-    scan = request.form.get("quelle") == "scan"
+    quelle = request.form.get("quelle")
     endung = Path(originalname).suffix.lower()
-    if scan and (endung != ".pdf" or not inhalt.startswith(b"%PDF-")):
+    if quelle == "scan" and (endung != ".pdf" or not inhalt.startswith(b"%PDF-")):
         return jsonify(fehler="Das Scan-PDF konnte nicht gelesen werden."), 400
 
     entwurf = Dokument(
@@ -626,10 +627,11 @@ def dokument_vorbereiten():
             fehler="Der Upload konnte nicht vorbereitet werden."
         ), 503
 
-    if scan or request.form.get("namensvorschlag") == "ja":
+    direkter_import = quelle in {"scan", "hochladen", "einfuegen"}
+    if direkter_import or request.form.get("namensvorschlag") == "ja":
         namensvorschlag_vorbereiten(entwurf_id, inhalt, endung)
-        if scan:
-            return scan_entwurf_antwort(entwurf_id)
+        if direkter_import:
+            return entwurf_antwort(entwurf_id, quelle)
         return redirect(url_for("entwurf_speichern", dokument_id=entwurf_id), code=303)
 
     return redirect(
@@ -641,7 +643,8 @@ def dokument_vorbereiten():
     methods=["GET", "POST"],
 )
 def entwurf_verwerfen(dokument_id):
-    scan = request.args.get("quelle") == "scan"
+    quelle = request.args.get("quelle")
+    rueckziel = "scannen" if quelle == "scan" else "index"
     try:
         entwurf_abfrage = db.select(
             Dokument.id,
@@ -669,7 +672,7 @@ def entwurf_verwerfen(dokument_id):
                 abort(404)
 
             db.session.commit()
-            return redirect(url_for("scannen" if scan else "dokumente"), code=303)
+            return redirect(url_for(rueckziel), code=303)
     except SQLAlchemyError:
         db.session.rollback()
         return jsonify(
@@ -679,7 +682,7 @@ def entwurf_verwerfen(dokument_id):
     return render_template(
         "entwurf_verwerfen.html",
         entwurf=entwurf,
-        scan=scan,
+        quelle=quelle if quelle in {"scan", "hochladen", "einfuegen"} else None,
     )
 @app.route("/scannen")
 def scannen():
