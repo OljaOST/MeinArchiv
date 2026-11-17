@@ -2,6 +2,7 @@ from .dokumentimport import (
     import_speichern,
     import_vorschau,
     namensvorschlag_vorbereiten,
+    scan_entwurf_antwort,
 )
 from .dokumentbearbeitung import dokument_angaben_bearbeiten
 from flask_migrate import Migrate
@@ -609,6 +610,11 @@ def dokument_vorbereiten():
     if not inhalt:
         return jsonify(fehler="Die Datei ist leer."), 400
 
+    scan = request.form.get("quelle") == "scan"
+    endung = Path(originalname).suffix.lower()
+    if scan and (endung != ".pdf" or not inhalt.startswith(b"%PDF-")):
+        return jsonify(fehler="Das Scan-PDF konnte nicht gelesen werden."), 400
+
     entwurf = Dokument(
         dateiname=originalname,
         inhalt=inhalt,
@@ -626,8 +632,10 @@ def dokument_vorbereiten():
             fehler="Der Upload konnte nicht vorbereitet werden."
         ), 503
 
-    if request.form.get("namensvorschlag") == "ja":
-        namensvorschlag_vorbereiten(entwurf_id, inhalt, Path(originalname).suffix.lower())
+    if scan or request.form.get("namensvorschlag") == "ja":
+        namensvorschlag_vorbereiten(entwurf_id, inhalt, endung)
+        if scan:
+            return scan_entwurf_antwort(entwurf_id)
         return redirect(url_for("entwurf_speichern", dokument_id=entwurf_id), code=303)
 
     return redirect(
@@ -639,6 +647,7 @@ def dokument_vorbereiten():
     methods=["GET", "POST"],
 )
 def entwurf_verwerfen(dokument_id):
+    scan = request.args.get("quelle") == "scan"
     try:
         entwurf_abfrage = db.select(
             Dokument.id,
@@ -666,7 +675,7 @@ def entwurf_verwerfen(dokument_id):
                 abort(404)
 
             db.session.commit()
-            return redirect(url_for("dokumente"), code=303)
+            return redirect(url_for("scannen" if scan else "dokumente"), code=303)
     except SQLAlchemyError:
         db.session.rollback()
         return jsonify(
@@ -676,6 +685,7 @@ def entwurf_verwerfen(dokument_id):
     return render_template(
         "entwurf_verwerfen.html",
         entwurf=entwurf,
+        scan=scan,
     )
 @app.route("/scannen")
 def scannen():

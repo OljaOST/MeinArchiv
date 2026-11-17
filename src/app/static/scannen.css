@@ -149,3 +149,14 @@
     object-fit: contain;
     background: #e8edf5;
 }
+
+.scan-dateiname {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.scan-dateiname input {
+    flex: 1;
+    min-width: 0;
+}

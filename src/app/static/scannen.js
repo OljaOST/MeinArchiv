@@ -12,7 +12,13 @@ const bild = document.querySelector("#scan-bild");
 const abmessungen = document.querySelector("#scan-abmessungen");
 const statusText = document.querySelector("#scan-status");
 const fehlerText = document.querySelector("#scan-fehler");
-const uebernehmen = document.querySelector("#scan-uebernehmen");
+const speichern = document.querySelector("#scan-speichern");
+const verwerfen = document.querySelector("#scan-verwerfen");
+const ruecklink = document.querySelector("#scan-zurueck");
+const namensfeld = document.querySelector("#scan-namensfeld");
+const dateiname = document.querySelector("#scan-dateiname");
+const nameStatus = document.querySelector("#scan-name-status");
+const erneutVersuchen = document.querySelector("#scan-name-erneut");
 const zuschnitt = document.querySelector("#scan-zuschnitt");
 const ausschnitt = document.querySelector("#scan-ausschnitt");
 const zuschneiden = document.querySelector("#scan-zuschneiden");
@@ -29,6 +35,8 @@ let original = null;
 let kameraStream = null;
 let kameraAnfrage = 0;
 let beschaeftigt = false;
+let namensvorschlagLaedt = false;
+let entwurf = null;
 let rahmen;
 let zug = null;
 
@@ -59,7 +67,10 @@ function zeigeBild(quelle) {
 
 function aktualisiereBedienung() {
     const zuschnittOffen = !zuschnitt.hidden;
-    uebernehmen.disabled = beschaeftigt || !original || zuschnittOffen;
+    speichern.disabled = beschaeftigt || !entwurf || zuschnittOffen;
+    dateiname.disabled = beschaeftigt || !entwurf;
+    verwerfen.disabled = beschaeftigt || namensvorschlagLaedt;
+    ruecklink.setAttribute("aria-disabled", String(verwerfen.disabled));
     for (const knopf of [linksDrehen, rechtsDrehen, reset, zuschneiden]) {
         knopf.disabled = beschaeftigt || !original || zuschnittOffen;
     }
@@ -226,9 +237,12 @@ ausloesen.addEventListener("click", () => {
     zeigeBild(original);
     loescheFehler();
     editor.hidden = false;
+    document.querySelector("#scan-startseite").hidden = true;
+    ruecklink.hidden = false;
     kameraSchliessen();
     aktualisiereBedienung();
     linksDrehen.focus();
+    ladeNamensvorschlag();
 });
 
 window.addEventListener("pagehide", kameraSchliessen);
@@ -286,35 +300,94 @@ ausschneiden.addEventListener("click", () => {
     zuschneiden.focus();
 });
 
-formular.addEventListener("submit", async (ereignis) => {
-    ereignis.preventDefault();
-    if (!original || beschaeftigt || !zuschnitt.hidden) return;
-    beschaeftigt = true;
+async function pdfDaten(quelle) {
+    const pdf = await scanAlsPdf(quelle);
+    if (pdf.size + 4096 > MAX_DATEIGROESSE) {
+        throw new Error("Das PDF ist zu gross. Versuche es mit einem kleineren Ausschnitt.");
+    }
+    const daten = new FormData();
+    daten.append("dokument", pdf, "scan.pdf");
+    return daten;
+}
+
+async function ladeNamensvorschlag() {
+    namensvorschlagLaedt = true;
+    erneutVersuchen.hidden = true;
     loescheFehler();
-    statusText.textContent = "Dateinamenvorschlag wird erstellt …";
+    nameStatus.textContent = "Dateinamenvorschlag wird erstellt …";
     aktualisiereBedienung();
     try {
-        const datei = await scanAlsPdf(bild);
-        if (datei.size + 4096 > MAX_DATEIGROESSE) {
-            throw new Error("Das PDF ist zu gross. Versuche es mit einem kleineren Ausschnitt.");
-        }
-        const daten = new FormData();
-        daten.append("namensvorschlag", "ja");
-        daten.append("dokument", datei, "scan.pdf");
+        const daten = await pdfDaten(original);
+        daten.append("quelle", "scan");
         const antwort = await fetch(formular.action, {method: "POST", body: daten});
-        if (!antwort.ok) {
-            const inhalt = await antwort.json().catch(() => null);
-            throw new Error(inhalt?.fehler || "Der Upload ist fehlgeschlagen. Bitte versuche es erneut.");
+        const ergebnis = await antwort.json().catch(() => null);
+        if (!antwort.ok || !ergebnis?.speichern) {
+            throw new Error(ergebnis?.fehler || "Der Namensvorschlag konnte nicht geladen werden.");
         }
+        entwurf = ergebnis;
+        dateiname.value = entwurf.stamm;
+        namensfeld.hidden = false;
+        nameStatus.textContent = entwurf.ki_erkannt
+            ? ""
+            : "Der KI-Namensvorschlag ist nicht verfügbar. Du kannst den Namen ändern.";
+    } catch (fehler) {
+        nameStatus.textContent = "";
+        erneutVersuchen.hidden = false;
+        zeigeFehler(fehler.message);
+    } finally {
+        namensvorschlagLaedt = false;
+        aktualisiereBedienung();
+    }
+}
+
+erneutVersuchen.addEventListener("click", ladeNamensvorschlag);
+
+async function zurueckZumScannen(ereignis) {
+    ereignis.preventDefault();
+    if (verwerfen.disabled) return;
+    beschaeftigt = true;
+    loescheFehler();
+    aktualisiereBedienung();
+    try {
+        if (entwurf) {
+            const antwort = await fetch(entwurf.verwerfen, {method: "POST"});
+            if (!antwort.redirected && antwort.status !== 404) {
+                throw new Error("Der Entwurf konnte nicht verworfen werden.");
+            }
+        }
+        window.location.assign(ruecklink.href);
+    } catch (fehler) {
+        zeigeFehler(fehler.message);
+        beschaeftigt = false;
+        aktualisiereBedienung();
+    }
+}
+
+verwerfen.addEventListener("click", zurueckZumScannen);
+ruecklink.addEventListener("click", zurueckZumScannen);
+
+formular.addEventListener("submit", async (ereignis) => {
+    ereignis.preventDefault();
+    if (speichern.disabled) return;
+    beschaeftigt = true;
+    loescheFehler();
+    statusText.textContent = "Scan wird gespeichert …";
+    aktualisiereBedienung();
+    try {
+        const daten = await pdfDaten(bild);
+        daten.append("scan_editor", "ja");
+        daten.append("dateiname", dateiname.value);
+        daten.append("bestaetigung", entwurf.bestaetigung);
+        const antwort = await fetch(entwurf.speichern, {method: "POST", body: daten});
         if (!antwort.redirected) {
-            throw new Error("Der Upload konnte nicht bestätigt werden. Prüfe bitte deine offenen Entwürfe, bevor du es erneut versuchst.");
+            const inhalt = await antwort.json().catch(() => null);
+            if (inhalt?.bestaetigung) entwurf.bestaetigung = inhalt.bestaetigung;
+            throw new Error(inhalt?.fehler || "Der Scan konnte nicht gespeichert werden.");
         }
         window.location.assign(antwort.url);
     } catch (fehler) {
         statusText.textContent = "";
-        zeigeFehler(fehler instanceof TypeError
-            ? "Die Verbindung wurde unterbrochen. Prüfe bitte deine offenen Entwürfe, bevor du es erneut versuchst."
-            : fehler.message);
+        zeigeFehler(fehler.message);
         beschaeftigt = false;
         aktualisiereBedienung();
     }

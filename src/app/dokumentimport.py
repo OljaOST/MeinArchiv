@@ -7,7 +7,7 @@ from datetime import datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-from flask import abort, redirect, render_template, request, url_for
+from flask import abort, jsonify, redirect, render_template, request, url_for
 from itsdangerous import BadData, URLSafeTimedSerializer
 from openai import APIError
 from sqlalchemy.exc import SQLAlchemyError
@@ -74,7 +74,31 @@ def import_vorschau(dokument_id):
     return dokument_vorschau_anzeigen(dokument_id, ist_entwurf=True)
 
 
+def scan_entwurf_antwort(dokument_id):
+    dokument = db.session.get(Dokument, dokument_id)
+    if dokument is None or not dokument.ist_entwurf:
+        abort(404)
+
+    dateiname = dokument.dateiname
+    if dokument.ablagedatum is None:
+        datum = datetime.now(ZoneInfo("Europe/Zurich")).date()
+        dateiname = erstelle_dateinamen(datum, "Dokument", "Unbekannt", ".pdf")
+
+    return jsonify(
+        stamm=Path(dateiname).stem,
+        ki_erkannt=dokument.ablagedatum is not None,
+        bestaetigung=_formularcode.dumps([dokument_id, "scan"]),
+        speichern=url_for("entwurf_speichern", dokument_id=dokument_id, quelle="scan"),
+        verwerfen=url_for("entwurf_verwerfen", dokument_id=dokument_id, quelle="scan"),
+    )
+
+
 def import_speichern(dokument_id):
+    scan = request.args.get("quelle") == "scan"
+    scan_post = (
+        scan and request.method == "POST" and request.form.get("scan_editor") == "ja"
+    )
+    erwarteter_code = [dokument_id, "scan"] if scan_post else dokument_id
     try:
         abfrage = db.select(
             Dokument.id,
@@ -102,7 +126,7 @@ def import_speichern(dokument_id):
                 )
             except BadData:
                 code = None
-            if code != dokument_id:
+            if code != erwarteter_code:
                 fehler = (
                     "Das Formular ist abgelaufen. Prüfe den Namen und speichere erneut."
                 )
@@ -111,6 +135,14 @@ def import_speichern(dokument_id):
                     dateiname = dateiname_mit_endung(stamm, endung)
                 except ValueError as exc:
                     fehler = str(exc)
+            aenderungen = {}
+            if scan_post and fehler is None:
+                pdf = request.files.get("dokument")
+                inhalt = pdf.read() if pdf is not None else b""
+                if endung.lower() != ".pdf" or not inhalt.startswith(b"%PDF-"):
+                    fehler = "Das Scan-PDF konnte nicht gelesen werden."
+                else:
+                    aenderungen["inhalt"] = inhalt
             if fehler is None:
                 db.session.execute(
                     db.update(Dokument)
@@ -125,10 +157,17 @@ def import_speichern(dokument_id):
                             or datetime.now(ZoneInfo("Europe/Zurich")).date()
                         ),
                         ist_entwurf=False,
+                        **aenderungen,
                     )
                 )
                 db.session.commit()
                 return redirect(url_for("index", gespeichert=dokument_id), 303)
+
+        if scan_post:
+            return jsonify(
+                fehler=fehler,
+                bestaetigung=_formularcode.dumps(erwarteter_code),
+            ), 400
 
         return render_template(
             "import_speichern.html",
@@ -137,6 +176,7 @@ def import_speichern(dokument_id):
             endung=endung,
             bestaetigung=_formularcode.dumps(dokument_id),
             fehler=fehler,
+            scan=scan,
         ), (400 if fehler else 200)
     except SQLAlchemyError:
         db.session.rollback()

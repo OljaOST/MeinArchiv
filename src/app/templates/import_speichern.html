@@ -8,7 +8,11 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='import.css') }}">
 </head>
 <body>
+    {% if scan %}
+    <a href="{{ url_for('scannen') }}">Zurück zum Scannen</a>
+    {% else %}
     <a href="{{ url_for('dokumente') }}">Zurück zu meinen Dokumenten</a>
+    {% endif %}
     <main class="import-ansicht">
         <h1>Dokumentvorschau</h1>
         <div class="import-vorschau">
@@ -16,7 +20,6 @@
                 <img src="{{ url_for('entwurf_vorschau', dokument_id=dokument.id) }}" alt="Vorschau des Dokuments">
             {% elif endung|lower == '.pdf' %}
                 <iframe src="{{ url_for('entwurf_vorschau', dokument_id=dokument.id) }}" title="PDF-Vorschau"></iframe>
-                <a href="{{ url_for('entwurf_vorschau', dokument_id=dokument.id) }}" target="_blank" rel="noopener">PDF separat öffnen</a>
             {% else %}
                 <p>{{ dokument.dateiname }}</p>
             {% endif %}
@@ -34,7 +37,7 @@
             {% endif %}
             <button type="submit">In meine Dokumente speichern</button>
         </form>
-        <a href="{{ url_for('entwurf_verwerfen', dokument_id=dokument.id) }}">Entwurf verwerfen</a>
+        <a href="{{ url_for('entwurf_verwerfen', dokument_id=dokument.id, quelle='scan' if scan else None) }}">Entwurf verwerfen</a>
     </main>
 </body>
 </html>

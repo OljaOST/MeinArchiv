@@ -5,12 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Scannen – MeinArchiv</title>
     <link rel="stylesheet" href="/static/style.css">
-    <link rel="stylesheet" href="/static/scannen.css?v=3">
+    <link rel="stylesheet" href="/static/scannen.css?v=4">
     <script src="/static/scan-pdf.js?v=3" defer></script>
-    <script src="/static/scannen.js?v=4" defer></script>
+    <script src="/static/scannen.js?v=5" defer></script>
 </head>
 <body>
-    <a href="/">Zurück zur Startseite</a>
+    <a id="scan-startseite" href="/">Zurück zur Startseite</a>
+    <a id="scan-zurueck" href="{{ url_for('scannen') }}" hidden>Zurück zum Scannen</a>
     <main>
         <h1>Scannen</h1>
         <form id="scan-formular" action="{{ url_for('dokument_vorbereiten') }}" method="post" enctype="multipart/form-data">
@@ -30,6 +31,7 @@
                     <button type="button" id="scan-ausloesen" disabled>Foto aufnehmen</button>
                     <button type="button" id="scan-kamera-abbrechen" class="scan-nebenaktion">Abbrechen</button>
                 </div>
+                <p class="scan-hinweis">Beim Aufnehmen wird das Kamerabild für den Namensvorschlag an OpenAI gesendet.</p>
             </div>
 
             <section id="scan-editor" aria-labelledby="vorschau-titel" hidden>
@@ -59,8 +61,19 @@
                         <button type="button" id="scan-abbrechen" class="scan-nebenaktion">Abbrechen</button>
                     </div>
                 </fieldset>
-                <button type="submit" id="scan-uebernehmen" disabled>Weiter zur PDF-Vorschau</button>
-                <p class="scan-hinweis">Dateinamenvorschlag über OpenAI.</p>
+                <p id="scan-name-status" role="status"></p>
+                <div id="scan-namensfeld" hidden>
+                    <label for="scan-dateiname">Dokumentname</label>
+                    <div class="scan-dateiname">
+                        <input id="scan-dateiname" type="text" name="dateiname" maxlength="251" required disabled>
+                        <span>.pdf</span>
+                    </div>
+                </div>
+                <div class="scan-werkzeuge">
+                    <button type="submit" id="scan-speichern" disabled>In meine Dokumente speichern</button>
+                    <button type="button" id="scan-verwerfen" class="scan-nebenaktion">Entwurf verwerfen</button>
+                    <button type="button" id="scan-name-erneut" class="scan-nebenaktion" hidden>Namensvorschlag erneut laden</button>
+                </div>
             </section>
 
             <p id="scan-status" role="status" aria-live="polite"></p>
