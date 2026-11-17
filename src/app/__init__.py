@@ -98,6 +98,12 @@ def init_db():
 def index():
     return startseite_anzeigen()
 
+
+@app.route("/hochladen")
+def hochladen():
+    return render_template("hochladen.html")
+
+
 @app.route("/dokumente")
 def dokumente():
     suche = request.args.get("q", "").strip()
@@ -134,17 +140,6 @@ def dokumente():
                     Dokument.kategorie_id.is_(None),
                 )
             )
-
-        entwurf_abfrage = (
-            db.select(
-                Dokument.id,
-                Dokument.dateiname,
-            )
-            .where(Dokument.ist_entwurf.is_(True))
-            .order_by(Dokument.id.desc())
-        )
-
-        offene_entwuerfe = db.session.execute(entwurf_abfrage).all()
     except SQLAlchemyError:
         db.session.rollback()
         return jsonify(fehler="Die Übersicht konnte nicht geladen werden."), 503
@@ -154,7 +149,6 @@ def dokumente():
         dokumente=gespeicherte_dokumente,
         kategorien=gespeicherte_kategorien,
         ohne_kategorie=ohne_kategorie,
-        entwuerfe=offene_entwuerfe,
         suche=suche,
     )
 

@@ -39,7 +39,7 @@
             <p id="einfuegen-fehler" role="alert" hidden></p>
             <button type="submit" id="dokument-uebernehmen" disabled>Dokument übernehmen</button>
             <p class="einfuegen-hinweis">Mit «Dokument übernehmen» wird die Datei zur Ermittlung des Dateinamens an OpenAI gesendet.</p>
-            <noscript><p>Bitte aktiviere JavaScript oder verwende <a href="/dokumente#dokument-hinzufuegen">Hochladen</a>.</p></noscript>
+            <noscript><p>Bitte aktiviere JavaScript oder verwende <a href="{{ url_for('hochladen') }}">Hochladen</a>.</p></noscript>
         </form>
     </main>
 </body>
