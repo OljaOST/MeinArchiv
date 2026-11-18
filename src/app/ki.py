@@ -3,29 +3,19 @@ import json
 
 from openai import OpenAI
 
+from .dateiformate import DATEIFORMATE
+
 
 def erkenne_dokument(inhalt, endung, kategorien):
-    dateitypen = {
-        ".pdf": "application/pdf",
-        ".jpg": "image/jpeg",
-        ".jpeg": "image/jpeg",
-        ".png": "image/png",
-        ".doc": "application/msword",
-        ".docx": (
-            "application/vnd.openxmlformats-officedocument."
-            "wordprocessingml.document"
-        ),
-    }
-
     endung = endung.lower()
 
-    if endung not in dateitypen:
+    if endung not in DATEIFORMATE:
         raise ValueError("Dieses Dateiformat wird nicht unterstützt.")
 
     if not inhalt or len(inhalt) > 10 * 1024 * 1024:
         raise ValueError("Bitte eine nicht leere Datei bis 10 MB verwenden.")
 
-    dateityp = dateitypen[endung]
+    dateityp = DATEIFORMATE[endung]
     kodierter_inhalt = base64.b64encode(inhalt).decode("ascii")
     datenadresse = f"data:{dateityp};base64,{kodierter_inhalt}"
 

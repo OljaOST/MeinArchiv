@@ -12,6 +12,7 @@ from itsdangerous import BadData, URLSafeTimedSerializer
 from openai import APIError
 from sqlalchemy.exc import SQLAlchemyError
 
+from .dateiformate import inhalt_passt_zur_endung
 from .dateinamen import dateiname_mit_endung, erstelle_dateinamen
 from .datenbank import Dokument, Kategorie, db
 from .dokumentansicht import dokument_vorschau_anzeigen
@@ -152,7 +153,9 @@ def import_speichern(dokument_id):
             if scan_post and fehler is None:
                 pdf = request.files.get("dokument")
                 inhalt = pdf.read() if pdf is not None else b""
-                if endung.lower() != ".pdf" or not inhalt.startswith(b"%PDF-"):
+                if endung.lower() != ".pdf" or not inhalt_passt_zur_endung(
+                    inhalt, endung
+                ):
                     fehler = "Das Scan-PDF konnte nicht gelesen werden."
                 else:
                     aenderungen["inhalt"] = inhalt

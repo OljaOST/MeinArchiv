@@ -15,6 +15,7 @@ from datetime import date, datetime
 
 from zoneinfo import ZoneInfo
 
+from .dateiformate import ERLAUBTE_ENDUNGEN, inhalt_passt_zur_endung
 from .dateinamen import erstelle_dateinamen
 
 from openai import APIError, OpenAI
@@ -152,87 +153,6 @@ def dokumente():
         ohne_kategorie=ohne_kategorie,
         suche=suche,
     )
-
-@app.route("/dokumente/speichern", methods=["POST"])
-def dokument_speichern():
-    datei = request.files.get("dokument")
-
-    if datei is None or not datei.filename:
-        return jsonify(fehler="Bitte eine Datei auswählen."), 400
-
-    originalname = Path(datei.filename.replace("\\", "/")).name
-
-    if not originalname or len(originalname) > 255:
-        return jsonify(fehler="Der Dateiname ist ungültig oder zu lang."), 400
-
-    endung = Path(originalname).suffix.lower()
-    erlaubte_endungen = {".pdf", ".jpg", ".jpeg", ".png", ".doc", ".docx"}
-
-    if endung not in erlaubte_endungen:
-        return jsonify(fehler="Dieses Dateiformat wird nicht unterstützt."), 400
-
-    firma = request.form.get("firma", "").strip()
-
-    if not firma or len(firma) > 120:
-        return jsonify(
-            fehler="Bitte eine Firma mit 1 bis 120 Zeichen eingeben."
-        ), 400
-
-    inhalt = datei.read()
-
-    if not inhalt:
-        return jsonify(fehler="Die Datei ist leer."), 400
-
-    kategorie_wert = request.form.get("kategorie_id", "")
-
-    try:
-        kategorie_id = int(kategorie_wert) if kategorie_wert else None
-    except ValueError:
-        return jsonify(fehler="Bitte eine gültige Kategorie auswählen."), 400
-
-    try:
-        kategoriename = "Dokument"
-
-        if kategorie_id is not None:
-            kategorie = db.session.get(Kategorie, kategorie_id)
-
-            if kategorie is None:
-                return jsonify(
-                    fehler="Die ausgewählte Kategorie existiert nicht mehr."
-                ), 400
-
-            kategoriename = kategorie.name
-
-        ablagedatum = datetime.now(ZoneInfo("Europe/Zurich")).date()
-
-        dateiname = erstelle_dateinamen(
-            ablagedatum,
-            kategoriename,
-            firma,
-            endung,
-        )
-
-        dokument = Dokument(
-            dateiname=dateiname,
-            inhalt=inhalt,
-            firma=firma,
-            ablagedatum=ablagedatum,
-            kategorie_id=kategorie_id,
-        )
-
-        db.session.add(dokument)
-        db.session.commit()
-    except IntegrityError:
-        db.session.rollback()
-        return jsonify(
-            fehler="Die Zuordnung konnte nicht gespeichert werden. "
-            "Bitte die Seite neu laden."
-        ), 409
-    except SQLAlchemyError:
-        db.session.rollback()
-        return jsonify(fehler="Die Datei konnte nicht gespeichert werden."), 503
-
-    return redirect(url_for("dokumente"), code=303)
 
 @app.route("/dokumente/<int:dokument_id>/download")
 def dokument_download(dokument_id):
@@ -595,9 +515,9 @@ def dokument_vorbereiten():
     if not originalname or len(originalname) > 255:
         return jsonify(fehler="Der Dateiname ist ungültig oder zu lang."), 400
 
-    erlaubte_endungen = {".pdf", ".jpg", ".jpeg", ".png", ".doc", ".docx"}
+    endung = Path(originalname).suffix.lower()
 
-    if Path(originalname).suffix.lower() not in erlaubte_endungen:
+    if endung not in ERLAUBTE_ENDUNGEN:
         return jsonify(fehler="Dieses Dateiformat wird nicht unterstützt."), 400
 
     inhalt = datei.read()
@@ -606,9 +526,18 @@ def dokument_vorbereiten():
         return jsonify(fehler="Die Datei ist leer."), 400
 
     quelle = request.form.get("quelle")
-    endung = Path(originalname).suffix.lower()
-    if quelle == "scan" and (endung != ".pdf" or not inhalt.startswith(b"%PDF-")):
+    if quelle == "scan" and (
+        endung != ".pdf" or not inhalt_passt_zur_endung(inhalt, endung)
+    ):
         return jsonify(fehler="Das Scan-PDF konnte nicht gelesen werden."), 400
+
+    # Die Endung stammt aus dem Dateinamen und beweist nichts über den Inhalt.
+    # Deshalb wird bei jeder Datei die Dateisignatur geprüft, bevor etwas
+    # gespeichert oder an OpenAI gesendet wird.
+    if not inhalt_passt_zur_endung(inhalt, endung):
+        return jsonify(
+            fehler=f"Der Dateiinhalt passt nicht zum Format {endung}."
+        ), 400
 
     entwurf = Dokument(
         dateiname=originalname,
