@@ -30,6 +30,8 @@ HTML und CSS stellen die Oberfläche dar. JavaScript steuert Kamera, Einfügen a
 
 Flask verarbeitet Dateiübertragung, Validierung, Dokumentverwaltung und Export. Jinja erzeugt HTML aus Vorlagen und Daten. Der gemeinsame Importablauf bereitet einen Entwurf vor, ermittelt den Namen und übernimmt das Dokument erst bei der Speicheraktion ins Archiv.
 
+Das Modul `dateiformate.py` führt die erlaubten Formate an einer Stelle. Vor dem Anlegen eines Entwurfs prüft es anhand der Dateisignatur, ob der Inhalt zur Endung passt. Die Prüfung gilt für Scannen, Hochladen und Einfügen gleichermassen.
+
 ### Datenbankzugriff
 
 Flask-SQLAlchemy beschreibt die Datenmodelle und Abfragen. psycopg übernimmt die PostgreSQL-Verbindung. Flask-Migrate und Alembic führen Änderungen am Datenbankschema über Migrationen aus.

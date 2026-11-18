@@ -20,6 +20,8 @@ MeinArchiv entsteht als Semesterprojekt im Fach Softwareentwicklung. Die Webanwe
 
 Die Uploadgrenze beträgt insgesamt 10 MB pro Anfrage. Bei einem mehrseitigen Scan gilt sie für das gesamte PDF. Die Browser-Vorschau unterstützt Bilder und PDFs.
 
+Der Server prüft bei jeder Datei, ob der Inhalt zum Format der Endung passt. Eine umbenannte Datei, etwa ein Programm mit der Endung `.pdf`, wird abgewiesen, bevor sie gespeichert oder an OpenAI gesendet wird. Die Begründung steht im [Entscheidungsprotokoll 0010](docs/decisions/0010-pruefung-des-dateiinhalts.md).
+
 ## Automatische Benennung
 
 Die Anwendung verwendet das Schema `JJMMTT_Dokumenttyp_Firma.Dateiendung`.
