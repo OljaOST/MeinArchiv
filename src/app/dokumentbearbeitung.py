@@ -12,6 +12,7 @@ from flask import abort, redirect, render_template, request, url_for
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
+from .dateiformate import ERLAUBTE_ENDUNGEN
 from .dateinamen import erstelle_dateinamen
 from .datenbank import Dokument, Kategorie, db
 
@@ -146,7 +147,7 @@ def dokument_angaben_bearbeiten(dokument_id):
         return abweisen("Das Ablagedatum darf nicht in der Zukunft liegen.")
 
     endung = Path(dokument.dateiname).suffix.lower()
-    if endung not in {".pdf", ".jpg", ".jpeg", ".png", ".doc", ".docx"}:
+    if endung not in ERLAUBTE_ENDUNGEN:
         return abweisen("Das gespeicherte Dateiformat wird nicht unterstützt.")
     neuer_name = erstelle_dateinamen(ablagedatum, kategoriename, werte["firma"], endung)
     if len(neuer_name) > 255:

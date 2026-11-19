@@ -47,7 +47,7 @@ def testumgebung(monkeypatch):
 
 def test_upload_analyse_bestaetigung_und_download(testumgebung, monkeypatch):
     client, kategorie_id = testumgebung
-    dateiinhalt = b"Testinhalt einer Rechnung"
+    dateiinhalt = b"%PDF-1.7\nTestinhalt einer Rechnung"
 
     erkennung = MagicMock(
         return_value={
@@ -145,7 +145,7 @@ def test_import_mit_dateinamenvorschlag_und_speichern(
         side_effect=None if erkennung_erfolgreich else ValueError("Kein Ergebnis"),
     )
     monkeypatch.setattr("app.dokumentimport.erkenne_dokument", erkennung)
-    inhalt = b"Testdatei"
+    inhalt = b"%PDF-1.7\nTestdatei"
     antwort = client.post(
         "/dokumente/vorbereiten",
         data={
