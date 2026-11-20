@@ -180,10 +180,13 @@ def import_speichern(dokument_id):
                 return redirect(url_for("index", gespeichert=dokument_id), 303)
 
         if scan_post:
-            return jsonify(
-                fehler=fehler,
-                bestaetigung=_formularcode.dumps(erwarteter_code),
-            ), 400
+            return (
+                jsonify(
+                    fehler=fehler,
+                    bestaetigung=_formularcode.dumps(erwarteter_code),
+                ),
+                400,
+            )
 
         return render_template(
             "import_speichern.html",
