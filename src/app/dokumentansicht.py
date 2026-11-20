@@ -117,6 +117,8 @@ def dokument_vorschau_anzeigen(dokument_id, *, ist_entwurf=False):
 
 def dokument_loeschen_bestaetigen(dokument_id):
     aus_ordner = request.args.get("aus_ordner") == "1"
+    # Löschen über «Zuletzt abgelegt» führt danach zurück zur Startseite.
+    von_start = request.args.get("von") == "start"
     if request.method == "POST":
         try:
             bestaetigung = _loesch_bestaetigung.loads(
@@ -161,9 +163,12 @@ def dokument_loeschen_bestaetigen(dokument_id):
             db.session.commit()
         except SQLAlchemyError:
             return _datenbankfehler()
-        ziel = (
-            ordner_url(geloescht.kategorie_id) if aus_ordner else url_for("dokumente")
-        )
+        if von_start:
+            ziel = url_for("index")
+        elif aus_ordner:
+            ziel = ordner_url(geloescht.kategorie_id)
+        else:
+            ziel = url_for("dokumente")
         return redirect(ziel, code=303)
 
     try:
@@ -173,14 +178,18 @@ def dokument_loeschen_bestaetigen(dokument_id):
     if dokument is None:
         abort(404)
 
+    if von_start:
+        zurueck, zurueck_text = url_for("index"), "Zurück zur Startseite"
+    elif aus_ordner:
+        zurueck, zurueck_text = ordner_url(dokument.kategorie_id), "Zurück zum Ordner"
+    else:
+        zurueck = url_for("dokument_detail", dokument_id=dokument_id)
+        zurueck_text = "Zurück zum Dokument"
+
     return render_template(
         "dokument_loeschen.html",
         dokument=dokument,
-        zurueck=(
-            ordner_url(dokument.kategorie_id)
-            if aus_ordner
-            else url_for("dokument_detail", dokument_id=dokument_id)
-        ),
-        aus_ordner=aus_ordner,
+        zurueck=zurueck,
+        zurueck_text=zurueck_text,
         bestaetigung=_loesch_bestaetigung.dumps({"dokument_id": dokument_id}),
     )

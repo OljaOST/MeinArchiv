@@ -332,3 +332,47 @@ def test_ordner_dateiliste_umbenennen_und_loeschen(start_client):
     assert "In diesem Ordner sind noch keine Dokumente abgelegt." in antwort.get_data(
         as_text=True
     )
+
+
+def test_startseite_loescht_mit_bestaetigung_und_kehrt_zurueck(start_client):
+    with app.app_context():
+        fehlscan = Dokument(
+            dateiname="261117_Dokument_Unbekannt.pdf",
+            inhalt=b"Fehlscan",
+            ablagedatum=date(2026, 11, 17),
+            ist_entwurf=False,
+        )
+        bleibt = Dokument(
+            dateiname="261116_Rechnung_Bleibt.pdf",
+            inhalt=b"Rechnung",
+            ablagedatum=date(2026, 11, 16),
+            ist_entwurf=False,
+        )
+        db.session.add_all([fehlscan, bleibt])
+        db.session.commit()
+        fehlscan_id, bleibt_id = fehlscan.id, bleibt.id
+
+    html = start_client.get("/").get_data(as_text=True)
+    loeschseite = f"/dokumente/{fehlscan_id}/loeschen?von=start"
+    assert f'href="{loeschseite}">Löschen</a>' in html
+
+    # Der Link löscht noch nichts, er öffnet nur die bestehende Bestätigungsseite.
+    html = start_client.get(loeschseite).get_data(as_text=True)
+    assert '<a href="/">Zurück zur Startseite</a>' in html
+    assert '<a href="/">Abbrechen</a>' in html
+    with app.app_context():
+        assert db.session.get(Dokument, fehlscan_id) is not None
+
+    token = re.search(r'name="bestaetigung" value="([^"]+)"', html).group(1)
+    antwort = start_client.post(
+        loeschseite,
+        data={"bestaetigung": token, "loeschen": "ja"},
+        follow_redirects=True,
+    )
+    assert antwort.request.path == "/"
+    html = antwort.get_data(as_text=True)
+    assert "261117_Dokument_Unbekannt.pdf" not in html
+    assert "261116_Rechnung_Bleibt.pdf" in html
+    with app.app_context():
+        assert db.session.get(Dokument, fehlscan_id) is None
+        assert db.session.get(Dokument, bleibt_id) is not None

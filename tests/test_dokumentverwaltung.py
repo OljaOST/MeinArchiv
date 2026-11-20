@@ -257,3 +257,20 @@ def test_nachtraeglich_als_entwurf_markiertes_dokument_wird_nicht_geloescht(
     assert antwort.status_code == 404
     with app.app_context():
         assert db.session.get(Dokument, dokument_id) is not None
+
+
+@pytest.mark.parametrize(
+    "abfrage, ruecklink",
+    [
+        ("", "Zurück zum Dokument"),
+        ("?aus_ordner=1", "Zurück zum Ordner"),
+        ("?von=start", "Zurück zur Startseite"),
+    ],
+)
+def test_loeschseite_fuehrt_zur_herkunft_zurueck(
+    verwaltungs_client, abfrage, ruecklink
+):
+    dokument_id = _speichere_dokument()
+    antwort = verwaltungs_client.get(f"/dokumente/{dokument_id}/loeschen{abfrage}")
+    assert antwort.status_code == 200
+    assert f">{ruecklink}</a>" in antwort.get_data(as_text=True)
