@@ -123,7 +123,14 @@ Die Testfixtures erstellen und entfernen Tabellen. Deshalb muss dieser Befehl di
 docker compose -p meinarchiv-tests -f compose.test.yml down
 ```
 
-[GitHub Actions](https://github.com/OljaOST/MeinArchiv/actions) führt dieselben Tests bei Pushes und Pull Requests automatisch aus. Praktische Browserprüfungen ergänzen sie bei Kamera, Zwischenablage, Zuschnitt und PDF-Seitennavigation.
+Vor einem Push den Code formatieren und prüfen. Die Einstellungen stammen aus `pyproject.toml`.
+
+```bash
+uv run black src tests scripts
+uv run ruff check --fix src tests scripts
+```
+
+[GitHub Actions](https://github.com/OljaOST/MeinArchiv/actions) prüft bei Pushes und Pull Requests zuerst Code und Formatierung mit ruff und black und führt danach dieselben Tests automatisch aus. Praktische Browserprüfungen ergänzen sie bei Kamera, Zwischenablage, Zuschnitt und PDF-Seitennavigation.
 
 ## Online-Betrieb
 
