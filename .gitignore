@@ -14,6 +14,8 @@
 __pycache__/
 .coverage
 .coverage.*
+# Von macOS angelegte Kopien wie «.coverage 2»
+.coverage *
 htmlcov/
 
 # Distribution building
