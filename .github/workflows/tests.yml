@@ -46,5 +46,14 @@ jobs:
       - name: Python-Pakete installieren
         run: uv sync --locked
 
+      # Prüft den Code mit den Einstellungen aus pyproject.toml (Template-Vorgabe):
+      # ruff findet Fehler und unsortierte Importe, black prüft die Formatierung.
+      # Die automatisch erzeugten Alembic-Migrationen sind bewusst ausgenommen.
+      - name: Code prüfen (ruff)
+        run: uv run --locked ruff check src tests scripts
+
+      - name: Formatierung prüfen (black)
+        run: uv run --locked black --check --diff src tests scripts
+
       - name: Tests ausführen
         run: uv run --locked pytest

@@ -1,52 +1,11 @@
-from .dokumentimport import (
-    import_speichern,
-    import_vorschau,
-    namensvorschlag_vorbereiten,
-    entwurf_antwort,
-)
-from .dokumentbearbeitung import dokument_angaben_bearbeiten
-from flask_migrate import Migrate
-
-from io import BytesIO
-
-from sqlalchemy.exc import IntegrityError, SQLAlchemyError
-
-from datetime import date, datetime
-
-from zoneinfo import ZoneInfo
-
-from .dateiformate import ERLAUBTE_ENDUNGEN, inhalt_passt_zur_endung
-from .dateinamen import erstelle_dateinamen
-
-from openai import APIError, OpenAI
-
-from .ki import erkenne_dokument
-
-from .startseite import (
-    kategorien_mit_anzahl,
-    kategorie_dokumente_anzeigen,
-    startseite_anzeigen,
-)
-from .dokumentordner import (
-    dokument_umbenennen_anzeigen,
-    dokument_verschieben_anzeigen,
-)
-
-from .dokumentansicht import (
-    dokument_anzeigen,
-    dokument_loeschen_bestaetigen,
-    dokument_vorschau_anzeigen,
-)
-
-from .einstellungen import einstellungen_anzeigen, dokumente_exportieren
-
-
 import os
+from datetime import date, datetime
+from io import BytesIO
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import click
 from dotenv import load_dotenv
-
 from flask import (
     Flask,
     abort,
@@ -57,10 +16,37 @@ from flask import (
     send_file,
     url_for,
 )
-
+from flask_migrate import Migrate
+from openai import APIError, OpenAI
 from sqlalchemy import URL
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
+from .dateiformate import ERLAUBTE_ENDUNGEN, inhalt_passt_zur_endung
+from .dateinamen import erstelle_dateinamen
 from .datenbank import Dokument, Kategorie, db
+from .dokumentansicht import (
+    dokument_anzeigen,
+    dokument_loeschen_bestaetigen,
+    dokument_vorschau_anzeigen,
+)
+from .dokumentbearbeitung import dokument_angaben_bearbeiten
+from .dokumentimport import (
+    entwurf_antwort,
+    import_speichern,
+    import_vorschau,
+    namensvorschlag_vorbereiten,
+)
+from .dokumentordner import (
+    dokument_umbenennen_anzeigen,
+    dokument_verschieben_anzeigen,
+)
+from .einstellungen import dokumente_exportieren, einstellungen_anzeigen
+from .ki import erkenne_dokument
+from .startseite import (
+    kategorie_dokumente_anzeigen,
+    kategorien_mit_anzahl,
+    startseite_anzeigen,
+)
 
 PROJEKTORDNER = Path(__file__).resolve().parents[2]
 load_dotenv(PROJEKTORDNER / ".env")
@@ -69,16 +55,13 @@ app = Flask(__name__)
 app.config["TEMPLATES_AUTO_RELOAD"] = True
 app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024
 
-app.config["SQLALCHEMY_DATABASE_URI"] = (
-    os.getenv("DATABASE_URL")
-    or URL.create(
-        drivername="postgresql+psycopg",
-        username="meinarchiv",
-        password=os.environ["POSTGRES_PASSWORD"],
-        host="127.0.0.1",
-        port=5432,
-        database="meinarchiv",
-    )
+app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL") or URL.create(
+    drivername="postgresql+psycopg",
+    username="meinarchiv",
+    password=os.environ["POSTGRES_PASSWORD"],
+    host="127.0.0.1",
+    port=5432,
+    database="meinarchiv",
 )
 
 db.init_app(app)
@@ -88,6 +71,7 @@ migrate = Migrate(
     db,
     directory=str(PROJEKTORDNER / "migrations"),
 )
+
 
 @app.cli.command("init-db")
 def init_db():
@@ -154,6 +138,7 @@ def dokumente():
         suche=suche,
     )
 
+
 @app.route("/dokumente/<int:dokument_id>/download")
 def dokument_download(dokument_id):
     try:
@@ -171,6 +156,7 @@ def dokument_download(dokument_id):
         download_name=dokument.dateiname,
         mimetype="application/octet-stream",
     )
+
 
 @app.route("/kategorien")
 def kategorien():
@@ -196,9 +182,10 @@ def kategorie_speichern():
     name = request.form.get("name", "").strip()
 
     if not name or len(name) > 60:
-        return jsonify(
-            fehler="Bitte einen Kategorienamen mit 1 bis 60 Zeichen eingeben."
-        ), 400
+        return (
+            jsonify(fehler="Bitte einen Kategorienamen mit 1 bis 60 Zeichen eingeben."),
+            400,
+        )
 
     kategorie = Kategorie(name=name)
 
@@ -214,12 +201,14 @@ def kategorie_speichern():
 
     return redirect(url_for("kategorien"), code=303)
 
+
 @app.route(
     "/dokumente/<int:dokument_id>/kategorie",
     methods=["GET", "POST"],
 )
 def dokument_kategorie(dokument_id):
     return dokument_angaben_bearbeiten(dokument_id)
+
 
 @app.route(
     "/kategorien/<int:kategorie_id>/bearbeiten",
@@ -230,9 +219,12 @@ def kategorie_bearbeiten(kategorie_id):
         name = request.form.get("name", "").strip()
 
         if not name or len(name) > 60:
-            return jsonify(
-                fehler="Bitte einen Kategorienamen mit 1 bis 60 Zeichen eingeben."
-            ), 400
+            return (
+                jsonify(
+                    fehler="Bitte einen Kategorienamen mit 1 bis 60 Zeichen eingeben."
+                ),
+                400,
+            )
 
     try:
         kategorie = db.session.get(Kategorie, kategorie_id)
@@ -250,14 +242,16 @@ def kategorie_bearbeiten(kategorie_id):
         return jsonify(fehler="Dieser Kategoriename ist bereits vergeben."), 409
     except SQLAlchemyError:
         db.session.rollback()
-        return jsonify(
-            fehler="Die Kategorie konnte nicht geladen oder geändert werden."
-        ), 503
+        return (
+            jsonify(fehler="Die Kategorie konnte nicht geladen oder geändert werden."),
+            503,
+        )
 
     return render_template(
         "kategorie_bearbeiten.html",
         kategorie=kategorie,
     )
+
 
 @app.route(
     "/kategorien/<int:kategorie_id>/loeschen",
@@ -276,22 +270,24 @@ def kategorie_loeschen(kategorie_id):
 
             return redirect(url_for("kategorien"), code=303)
 
-        anzahl_abfrage = db.select(
-            db.func.count(Dokument.id)
-        ).where(Dokument.kategorie_id == kategorie_id)
+        anzahl_abfrage = db.select(db.func.count(Dokument.id)).where(
+            Dokument.kategorie_id == kategorie_id
+        )
 
         anzahl_dokumente = db.session.scalar(anzahl_abfrage)
     except SQLAlchemyError:
         db.session.rollback()
-        return jsonify(
-            fehler="Die Kategorie konnte nicht geladen oder gelöscht werden."
-        ), 503
+        return (
+            jsonify(fehler="Die Kategorie konnte nicht geladen oder gelöscht werden."),
+            503,
+        )
 
     return render_template(
         "kategorie_loeschen.html",
         kategorie=kategorie,
         anzahl_dokumente=anzahl_dokumente,
     )
+
 
 @app.cli.command("ki-test")
 def ki_test():
@@ -321,6 +317,7 @@ def ki_test():
         raise click.ClickException("OpenAI hat keinen Antworttext geliefert.")
 
     click.echo(antwort.output_text)
+
 
 @app.route(
     "/dokumente/<int:dokument_id>/analysieren",
@@ -353,18 +350,17 @@ def dokument_analysieren(dokument_id):
 
         if request.method == "POST":
             if request.form.get("freigabe") != "ja":
-                return jsonify(
-                    fehler="Bitte die Übermittlung an OpenAI bestätigen."
-                ), 400
+                return (
+                    jsonify(fehler="Bitte die Übermittlung an OpenAI bestätigen."),
+                    400,
+                )
 
             if not os.getenv("OPENAI_API_KEY"):
-                return jsonify(
-                    fehler="Der OpenAI-API-Schlüssel fehlt."
-                ), 503
+                return jsonify(fehler="Der OpenAI-API-Schlüssel fehlt."), 503
 
-            inhalt_abfrage = db.select(
-                Dokument.inhalt
-            ).where(Dokument.id == dokument_id)
+            inhalt_abfrage = db.select(Dokument.inhalt).where(
+                Dokument.id == dokument_id
+            )
 
             inhalt = db.session.scalar(inhalt_abfrage)
 
@@ -372,9 +368,7 @@ def dokument_analysieren(dokument_id):
             db.session.rollback()
     except SQLAlchemyError:
         db.session.rollback()
-        return jsonify(
-            fehler="Das Dokument konnte nicht geladen werden."
-        ), 503
+        return jsonify(fehler="Das Dokument konnte nicht geladen werden."), 503
 
     if request.method == "POST":
         try:
@@ -390,14 +384,18 @@ def dokument_analysieren(dokument_id):
             )
             status = 502
 
-    return render_template(
-        "dokument_analysieren.html",
-        dokument=dokument,
-        kategorien=kategorien,
-        ergebnis=ergebnis,
-        fehler=fehler,
-        heute=datetime.now(ZoneInfo("Europe/Zurich")).date().isoformat(),
-    ), status
+    return (
+        render_template(
+            "dokument_analysieren.html",
+            dokument=dokument,
+            kategorien=kategorien,
+            ergebnis=ergebnis,
+            fehler=fehler,
+            heute=datetime.now(ZoneInfo("Europe/Zurich")).date().isoformat(),
+        ),
+        status,
+    )
+
 
 @app.route(
     "/dokumente/<int:dokument_id>/ki-uebernehmen",
@@ -407,9 +405,7 @@ def dokument_ki_uebernehmen(dokument_id):
     firma = request.form.get("firma", "").strip()
 
     if not firma or len(firma) > 120:
-        return jsonify(
-            fehler="Bitte eine Firma mit 1 bis 120 Zeichen eingeben."
-        ), 400
+        return jsonify(fehler="Bitte eine Firma mit 1 bis 120 Zeichen eingeben."), 400
 
     kategorie_wert = request.form.get("kategorie_id", "")
     datum_wert = request.form.get("ablagedatum", "")
@@ -418,9 +414,12 @@ def dokument_ki_uebernehmen(dokument_id):
         kategorie_id = int(kategorie_wert) if kategorie_wert else None
         angegebenes_datum = date.fromisoformat(datum_wert) if datum_wert else None
     except ValueError:
-        return jsonify(
-            fehler="Bitte eine gültige Kategorie und ein gültiges Datum eingeben."
-        ), 400
+        return (
+            jsonify(
+                fehler="Bitte eine gültige Kategorie und ein gültiges Datum eingeben."
+            ),
+            400,
+        )
 
     try:
         dokument_abfrage = (
@@ -447,14 +446,18 @@ def dokument_ki_uebernehmen(dokument_id):
             ablagedatum = dokument.ablagedatum or angegebenes_datum
 
         if ablagedatum is None:
-            return jsonify(
-                fehler="Für dieses Dokument muss das Ablagedatum ergänzt werden."
-            ), 400
+            return (
+                jsonify(
+                    fehler="Für dieses Dokument muss das Ablagedatum ergänzt werden."
+                ),
+                400,
+            )
 
         if ablagedatum > heute:
-            return jsonify(
-                fehler="Das Ablagedatum darf nicht in der Zukunft liegen."
-            ), 400
+            return (
+                jsonify(fehler="Das Ablagedatum darf nicht in der Zukunft liegen."),
+                400,
+            )
 
         kategoriename = "Dokument"
 
@@ -462,9 +465,10 @@ def dokument_ki_uebernehmen(dokument_id):
             kategorie = db.session.get(Kategorie, kategorie_id)
 
             if kategorie is None:
-                return jsonify(
-                    fehler="Die ausgewählte Kategorie existiert nicht mehr."
-                ), 400
+                return (
+                    jsonify(fehler="Die ausgewählte Kategorie existiert nicht mehr."),
+                    400,
+                )
 
             kategoriename = kategorie.name
 
@@ -491,17 +495,19 @@ def dokument_ki_uebernehmen(dokument_id):
         db.session.commit()
     except IntegrityError:
         db.session.rollback()
-        return jsonify(
-            fehler="Die Zuordnung konnte nicht gespeichert werden. "
-            "Bitte die Kategorie erneut auswählen."
-        ), 409
+        return (
+            jsonify(
+                fehler="Die Zuordnung konnte nicht gespeichert werden. "
+                "Bitte die Kategorie erneut auswählen."
+            ),
+            409,
+        )
     except SQLAlchemyError:
         db.session.rollback()
-        return jsonify(
-            fehler="Die Angaben konnten nicht gespeichert werden."
-        ), 503
+        return jsonify(fehler="Die Angaben konnten nicht gespeichert werden."), 503
 
     return redirect(url_for("dokumente"), code=303)
+
 
 @app.route("/dokumente/vorbereiten", methods=["POST"])
 def dokument_vorbereiten():
@@ -535,9 +541,7 @@ def dokument_vorbereiten():
     # Deshalb wird bei jeder Datei die Dateisignatur geprüft, bevor etwas
     # gespeichert oder an OpenAI gesendet wird.
     if not inhalt_passt_zur_endung(inhalt, endung):
-        return jsonify(
-            fehler=f"Der Dateiinhalt passt nicht zum Format {endung}."
-        ), 400
+        return jsonify(fehler=f"Der Dateiinhalt passt nicht zum Format {endung}."), 400
 
     entwurf = Dokument(
         dateiname=originalname,
@@ -552,9 +556,7 @@ def dokument_vorbereiten():
         db.session.commit()
     except SQLAlchemyError:
         db.session.rollback()
-        return jsonify(
-            fehler="Der Upload konnte nicht vorbereitet werden."
-        ), 503
+        return jsonify(fehler="Der Upload konnte nicht vorbereitet werden."), 503
 
     direkter_import = quelle in {"scan", "hochladen", "einfuegen"}
     if direkter_import or request.form.get("namensvorschlag") == "ja":
@@ -567,6 +569,8 @@ def dokument_vorbereiten():
         url_for("dokument_analysieren", dokument_id=entwurf_id),
         code=303,
     )
+
+
 @app.route(
     "/entwuerfe/<int:dokument_id>/verwerfen",
     methods=["GET", "POST"],
@@ -604,26 +608,32 @@ def entwurf_verwerfen(dokument_id):
             return redirect(url_for(rueckziel), code=303)
     except SQLAlchemyError:
         db.session.rollback()
-        return jsonify(
-            fehler="Der Entwurf konnte nicht geladen oder verworfen werden."
-        ), 503
+        return (
+            jsonify(fehler="Der Entwurf konnte nicht geladen oder verworfen werden."),
+            503,
+        )
 
     return render_template(
         "entwurf_verwerfen.html",
         entwurf=entwurf,
         quelle=quelle if quelle in {"scan", "hochladen", "einfuegen"} else None,
     )
+
+
 @app.route("/scannen")
 def scannen():
     return render_template("scannen.html")
+
 
 @app.route("/einfuegen")
 def einfuegen():
     return render_template("einfuegen.html")
 
+
 @app.route("/kategorien/<int:kategorie_id>/dokumente")
 def kategorie_dokumente(kategorie_id):
     return kategorie_dokumente_anzeigen(kategorie_id)
+
 
 @app.route("/dokumente/<int:dokument_id>")
 def dokument_detail(dokument_id):
@@ -639,6 +649,7 @@ def dokument_vorschau(dokument_id):
 def dokument_loeschen(dokument_id):
     return dokument_loeschen_bestaetigen(dokument_id)
 
+
 @app.route("/einstellungen")
 def einstellungen():
     return einstellungen_anzeigen()
@@ -647,7 +658,6 @@ def einstellungen():
 @app.route("/export/dokumente")
 def dokument_export():
     return dokumente_exportieren()
-
 
 
 @app.route("/entwuerfe/<int:dokument_id>/speichern", methods=["GET", "POST"])
@@ -660,7 +670,6 @@ def entwurf_vorschau(dokument_id):
     return import_vorschau(dokument_id)
 
 
-
 @app.route("/dokumente/ohne-kategorie")
 def dokumente_ohne_kategorie():
     return kategorie_dokumente_anzeigen(None)
@@ -669,7 +678,6 @@ def dokumente_ohne_kategorie():
 @app.route("/dokumente/<int:dokument_id>/verschieben", methods=["GET", "POST"])
 def dokument_verschieben(dokument_id):
     return dokument_verschieben_anzeigen(dokument_id)
-
 
 
 @app.route("/dokumente/<int:dokument_id>/umbenennen", methods=["GET", "POST"])
