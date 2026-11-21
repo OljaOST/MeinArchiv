@@ -82,12 +82,12 @@ Die Person wählt «Umbenennen», gibt einen gültigen Namen ein und bestätigt 
 
 ## UC-08 Dokument löschen
 
-1. Die Person wählt bei einem abgelegten Dokument «Löschen».
+1. Die Person wählt bei einem abgelegten Dokument «Löschen», auf der Startseite unter «Zuletzt abgelegt», in einem Ordner oder auf der Detailseite.
 2. Die App öffnet die Bestätigungsseite mit dem Dokumentnamen.
 3. Die Person klickt auf «Endgültig löschen».
 4. Die App entfernt die Datei und ihre Metadaten aus dem Archiv.
 
-Über «Abbrechen» kehrt die Person zurück. Das Öffnen der Bestätigungsseite allein entfernt das Dokument noch nicht.
+Über «Abbrechen» kehrt die Person dorthin zurück, wo sie «Löschen» gewählt hat. Nach dem Löschen gilt dasselbe, ausser beim Start von der Detailseite: Diese existiert danach nicht mehr, deshalb führt die App zu «Meine Dokumente». Das Öffnen der Bestätigungsseite allein entfernt das Dokument noch nicht.
 
 ## UC-09 Kategorien verwalten
 

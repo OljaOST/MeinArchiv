@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='dokumentansicht.css') }}">
 </head>
 <body>
-    <a href="{{ zurueck }}">{{ "Zurück zum Ordner" if aus_ordner else "Zurück zum Dokument" }}</a>
+    <a href="{{ zurueck }}">{{ zurueck_text }}</a>
     <main>
         <h1>Dokument löschen?</h1>
         <p class="detail-dateiname">{{ dokument.dateiname }}</p>

@@ -134,6 +134,17 @@
     font-size: 15px;
 }
 
+/* Gleiche Warnfarbe wie der Löschen-Button auf der Detailseite */
+.dokument-aktionen a.start-loeschen {
+    border-color: #e9bdb7;
+    background: #fff0ee;
+    color: #912018;
+}
+
+.dokument-aktionen a.start-loeschen:hover {
+    background: #ffe1dc;
+}
+
 @media (max-width: 380px) {
     .start-suchzeile {
         flex-wrap: wrap;

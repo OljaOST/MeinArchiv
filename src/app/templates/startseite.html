@@ -103,6 +103,7 @@
                     <div class="dokument-aktionen">
                         <a href="{{ url_for('dokument_detail', dokument_id=dokument.id) }}">Öffnen</a>
                         <a href="{{ url_for('dokument_download', dokument_id=dokument.id) }}">Herunterladen</a>
+                        <a class="start-loeschen" href="{{ url_for('dokument_loeschen', dokument_id=dokument.id, von='start') }}">Löschen</a>
                     </div>
                 </li>
                 {% endfor %}
